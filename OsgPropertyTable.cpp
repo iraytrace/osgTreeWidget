@@ -167,7 +167,7 @@ void OsgPropertyTable::setTableValuesForGeode(osg::Geode *geode)
     setTextForKey("NumDrawables", QString::asprintf("%d", geode->getNumDrawables()));
 
     osg::BoundingSpheref bs = geode->computeBound();
-    setTextForKey("GeodeBoundingSphere", QString::asprintf("radius:%g @(%g %g %g)",
+    setTextForKey("Bounds", QString::asprintf("radius:%g @(%g %g %g)",
                                                            bs.radius(),
                                                            bs.center().x(),
                                                            bs.center().y(),

@@ -14,9 +14,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     m_recentMenu.attachToMenuAfterItem(ui->menuFile, "Open...", SLOT(loadFile(QString)));
     setWindowTitle(qApp->applicationName());
-
-    connect(ui->osgTreeWidget, SIGNAL(currentObject(osg::ref_ptr<osg::Object>)),
-            ui->osgPropertyTableWidget, SLOT(displayObject(osg::ref_ptr<osg::Object>)));
 }
 
 MainWindow::~MainWindow()
@@ -63,7 +60,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->accept();
     }
 }
-#include "osgDB/ReadFile"
 
 void MainWindow::loadFile(QString fileName)
 {
@@ -73,14 +69,13 @@ void MainWindow::loadFile(QString fileName)
     settings.setValue("currentDirectory", fi.absolutePath());
     m_recentMenu.setMostRecentFile(fileName);
 
-    osg::Node *loaded = osgDB::readNodeFile(fileName.toStdString());
-    ui->osgTreeWidget->addObject(loaded);
+    ui->osgForm->openFile(fileName);
 }
 
 bool MainWindow::shouldAbortClose()
 {
     // Ask all open documents to save/close
-    // if any object then return "true"
+    // if any object is not done then return "true"
 
     return false;
 }

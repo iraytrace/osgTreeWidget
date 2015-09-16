@@ -19,6 +19,8 @@ OsgTreeWidget::OsgTreeWidget(QWidget *parent) :QTreeWidget(parent)
     connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
             this, SLOT(currentItemWasChanged(QTreeWidgetItem*,QTreeWidgetItem*)));
 
+    resizeAllColumns();
+
     this->setSelectionMode(QAbstractItemView::ExtendedSelection);
 #if 0
     void	currentItemChanged(QTreeWidgetItem * current, QTreeWidgetItem * previous)
