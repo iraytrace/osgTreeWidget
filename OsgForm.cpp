@@ -6,6 +6,7 @@
 
 #include <osgDB/ReadFile>
 #include <osgDB/WriteFile>
+#include <QMessageBox>
 
 OsgForm::OsgForm(QWidget *parent) :
     QWidget(parent),
@@ -48,12 +49,14 @@ void OsgForm::readNodesFinished()
     ui->osg3dView->update();
     ui->progressBar->hide();
     ui->progressBar->setMaximum(100);
-
 }
 
 void OsgForm::openFile(const QString fileName)
 {
-    // XXX should make sure we aren't running
+    if (m_watcher.isRunning()) {
+        QMessageBox::warning(this, "Loading in progress", "Please wait until the previous load has completed");
+        return;
+    }
     connect(&m_watcher, SIGNAL(finished()),
             this, SLOT(readNodesFinished()));
 
