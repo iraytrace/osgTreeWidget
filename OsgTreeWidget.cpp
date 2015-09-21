@@ -59,7 +59,7 @@ void OsgTreeWidget::addObject(osg::Object *object, QTreeWidgetItem *parentItem)
     newItem->setFlags(Qt::ItemIsEnabled|Qt::ItemIsSelectable|Qt::ItemIsEditable);
 
     if (osg::Node *n = dynamic_cast<osg::Node *>(object)) {
-        newItem->setText(2, QString::asprintf("%08x", n->getNodeMask()));
+        newItem->setText(2, QString("").setNum(n->getNodeMask(), 16));
 
         if (osg::Group *group = n->asGroup()) {
             for (unsigned i = 0 ; i < group->getNumChildren() ; i++) {

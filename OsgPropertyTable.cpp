@@ -1,5 +1,6 @@
 #include "OsgPropertyTable.h"
 
+#include <QString>
 #include <QHeaderView>
 
 #include <osg/Geometry>
@@ -146,11 +147,11 @@ void OsgPropertyTable::setTableValuesForNode(osg::Node *node)
     if (!node)
         return;
 
-    setTextForKey("NodeMask", QString::asprintf("%08x", (unsigned)node->getNodeMask()));
+    setTextForKey("NodeMask", QString("").setNum((unsigned)node->getNodeMask(), 16));
 
     setKeyChecked("CullingActive", node->isCullingActive());
 
-    setTextForKey("Descriptions", QString::asprintf("%d", node->getNumDescriptions()));
+    setTextForKey("Descriptions", QString("%1").arg(node->getNumDescriptions()));
 
     setTableValuesForGroup(node->asGroup());
     setTableValuesForGeode(node->asGeode());
@@ -158,21 +159,20 @@ void OsgPropertyTable::setTableValuesForNode(osg::Node *node)
 void OsgPropertyTable::setTableValuesForGroup(osg::Group *group)
 {
     if(!group) return;
-    setTextForKey("NumChildren", QString::asprintf("%d", group->getNumChildren()));
+    setTextForKey("NumChildren", QString("%1").arg(group->getNumChildren()));
 }
 void OsgPropertyTable::setTableValuesForGeode(osg::Geode *geode)
 {
     if(!geode) return;
 
-    setTextForKey("NumDrawables", QString::asprintf("%d", geode->getNumDrawables()));
+    setTextForKey("NumDrawables", QString("%1").arg(geode->getNumDrawables()));
 
     osg::BoundingSpheref bs = geode->computeBound();
-    setTextForKey("Bounds", QString::asprintf("radius:%g @(%g %g %g)",
-                                                           bs.radius(),
-                                                           bs.center().x(),
-                                                           bs.center().y(),
-                                                           bs.center().z()
-                                                           ));
+    setTextForKey("Bounds", QString("radius:%1 @(%2 %3 %4)")
+                  .arg(bs.radius())
+                  .arg(bs.center().x())
+                  .arg(bs.center().y())
+                  .arg(bs.center().z()));
 }
 void OsgPropertyTable::setTableValuesForDrawable(osg::Drawable *drawable)
 {
@@ -189,22 +189,22 @@ void OsgPropertyTable::setTableValuesForGeometry(osg::Geometry *geometry)
 
     osg::Array *array = geometry->getVertexArray();
     setTextForKey("PrimitiveSets",
-                  QString::asprintf("%d", geometry->getNumPrimitiveSets() ));
+                  QString("%1").arg(geometry->getNumPrimitiveSets()));
 
     if (array)
-        setTextForKey("VertexCount", QString::asprintf("%d", array->getNumElements()));
+        setTextForKey("VertexCount", QString("%1").arg(array->getNumElements()));
 
 
     array = geometry->getNormalArray();
     if (array)
-        setTextForKey("NormalCount", QString::asprintf("%d", array->getNumElements()));
+        setTextForKey("NormalCount", QString("%1").arg( array->getNumElements()));
 
 
     array = geometry->getColorArray();
     if (array)
-        setTextForKey("ColorCount", QString::asprintf("%d", array->getNumElements()));
+        setTextForKey("ColorCount", QString("%1").arg(array->getNumElements()));
 
     setTextForKey("TextCoordArrayCount",
-                  QString::asprintf("%d", geometry->getNumTexCoordArrays()));
+                  QString("%1").arg(geometry->getNumTexCoordArrays()));
 
 }
