@@ -18,7 +18,7 @@ set(PLUGIN_DIR ${RUNTIME_DIR}/plugins)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH    ${CMAKE_BINARY_DIR}/lib)
 
-#set(OSG_DIR "C:/osgearth")
+set(OSG_DIR "C:/Program Files/OpenSceneGraph")
 find_package(OpenSceneGraph 3.0.1 COMPONENTS osg osgDB osgViewer osgGA osgUtil OpenThreads)
 include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 
@@ -83,6 +83,8 @@ set(YOUR_LIBRARY_DIRS
   "${CMAKE_INSTALL_PREFIX}/lib"
   "${CMAKE_BINARY_DIR}/bin"
   "${CMAKE_BINARY_DIR}/lib"
+    "${OSG_DIR}/bin"
+    "${OSG_DIR}/lib"
   "${Qt5_DIR}/../../"
   "${Qt5_DIR}/../../bin"
   "${Qt5_DIR}/../../../bin"
