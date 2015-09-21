@@ -5,7 +5,8 @@
 #include <osg/Geode>
 
 #include <string>
-
+static const bool debugTreeWidget = false;
+#define twDebug if (debugTreeWidget) qDebug
 #include "VariantPtr.h"
 
 OsgTreeWidget::OsgTreeWidget(QWidget *parent) :QTreeWidget(parent)
@@ -52,7 +53,7 @@ void OsgTreeWidget::addObject(osg::Object *object, QTreeWidgetItem *parentItem)
         object->setName(qPrintable(name));
     }
 
-    qDebug("adding <%s>", object->getName().c_str());
+    twDebug("adding <%s>", object->getName().c_str());
     newItem->setText(0, QString::fromStdString(object->getName()));
     newItem->setText(1, object->className());
     newItem->setData(0, Qt::UserRole, VariantPtr<osg::Object>::asQVariant(object));
@@ -84,7 +85,7 @@ void OsgTreeWidget::addObject(osg::Object *object, QTreeWidgetItem *parentItem)
 
 void OsgTreeWidget::resizeAllColumns()
 {
-    qDebug("resizeColumns %d", columnCount());
+    twDebug("resizeColumns %d", columnCount());
     for (int i=0 ; i < this->columnCount() ; i++) {
         resizeColumnToContents(i);
     }
@@ -97,7 +98,7 @@ void OsgTreeWidget::currentItemWasChanged(QTreeWidgetItem *current,
     QVariant v = current->data(0, Qt::UserRole);
     osg::ref_ptr<osg::Object> object = VariantPtr<osg::Object>::asPtr(v);
 
-    qDebug("CurrentObject %s", object->getName().c_str());
+    twDebug("CurrentObject %s", object->getName().c_str());
     emit currentObject(object);
 }
 

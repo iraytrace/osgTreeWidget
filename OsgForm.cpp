@@ -1,6 +1,9 @@
 #include "OsgForm.h"
 #include "ui_OsgForm.h"
 
+#include <QtConcurrent/QtConcurrent>
+#include <QFuture>
+
 #include <osgDB/ReadFile>
 #include <osgDB/WriteFile>
 
@@ -19,6 +22,7 @@ OsgForm::OsgForm(QWidget *parent) :
     sz.append(100);
     sz.append(0);
     ui->splitterLeftRight->setSizes(sz);
+    ui->progressBar->hide();
 }
 
 OsgForm::~OsgForm()
@@ -26,9 +30,15 @@ OsgForm::~OsgForm()
     delete ui;
 }
 
-void OsgForm::openFile(const QString fileName)
+osg::ref_ptr<osg::Node> OsgForm::readNodes(const QString fileName)
 {
-    osg::Node *loaded = osgDB::readNodeFile(fileName.toStdString());
+    osg::ref_ptr<osg::Node> loaded = osgDB::readNodeFile(fileName.toStdString());
+    return loaded;
+}
+
+void OsgForm::readNodesFinished()
+{
+    osg::ref_ptr<osg::Node> loaded = m_watcher.future().result();
     ui->osgTreeWidget->addObject(loaded);
 
     m_root->addChild(loaded);
@@ -36,6 +46,24 @@ void OsgForm::openFile(const QString fileName)
         m_viewingCore->fitToScreen();
     }
     ui->osg3dView->update();
+    ui->progressBar->hide();
+    ui->progressBar->setMaximum(100);
+
+}
+
+void OsgForm::openFile(const QString fileName)
+{
+    // XXX should make sure we aren't running
+    connect(&m_watcher, SIGNAL(finished()),
+            this, SLOT(readNodesFinished()));
+
+    // Start the computation.
+    QFuture< osg::ref_ptr<osg::Node> > future = QtConcurrent::run(this, &OsgForm::readNodes, fileName);
+    m_watcher.setFuture(future);
+
+    ui->progressBar->setMinimum(0);
+    ui->progressBar->setMaximum(0);
+    ui->progressBar->show();
 }
 
 bool OsgForm::saveFile(const QString fileName)
