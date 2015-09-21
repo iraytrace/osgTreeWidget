@@ -27,7 +27,7 @@ public:
 
     /// Inserts the sub-menu into another Menu
     ///  param menu   The parent menu where the sub-menu should be inserted
-    ///  param before  Action in menu before which Recent menu should be inserted
+    ///  param text   Text of menu item after which Recent menu is inserted
     void attachToMenuAfterItem(QMenu *menu, QString text, const char *slotName);
 
     QStringList getRecentFiles() const;                     ///< application calls this to get list of recent files
@@ -42,7 +42,6 @@ public:
     static const int MaxRecentFiles = 20;  ///< Max number of names we keep.
 
 public slots:
-    // XXX this should all be pulled from QSettings
     /// The application can set the number of recent files retained/reported here
     void setNumOfRecentFiles(int n);
 
@@ -57,12 +56,11 @@ private:
     void purgeMissingFilesFromList(QStringList &recentFileList);
     void updateRecentFiles(QSettings &settings);  ///< call this with each new filename
 
-    //QStringList m_recentFiles; ///< List of recent file names.  Todo: migrate to qApp->property("app/recentFiles")
     QMenu *m_recentMenu;
     QAction *m_recentMenuTriggeredAction;
-    //int m_numOfRecentFiles; ///< How many recent file names do we remember
     QAction *m_recentFileActions[MaxRecentFiles]; ///< QActions created in file menu for storing recent files
 };
 
 #endif // RECENTFILES_H
+
 

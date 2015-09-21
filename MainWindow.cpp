@@ -4,6 +4,9 @@
 #include <QCloseEvent>
 #include <QSettings>
 #include <QFileDialog>
+#include <QMessageBox>
+
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -13,7 +16,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     m_recentMenu.attachToMenuAfterItem(ui->menuFile, "Open...", SLOT(loadFile(QString)));
-    setWindowTitle(qApp->applicationName());
+    VSLapp::mainWindowSetup(this);
+
 }
 
 MainWindow::~MainWindow()
@@ -23,16 +27,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_actionFileOpen_triggered()
 {
-    QSettings setttings;
-
-    QString fileName = QFileDialog::getOpenFileName(this, "Select File",
-                                                    setttings.value("currentDirectory").toString(),
-                                                    "All Files (*.*)");
-
-    if (fileName.isEmpty())
-        return;
-
-    loadFile(fileName);
+    QSettings settings;
+    loadFile(QFileDialog::getOpenFileName(this, "Select File",
+                                          settings.value("currentDirectory").toString(),
+                                          "All Files (*.*)"));
 }
 
 void MainWindow::on_actionFileSave_triggered()
@@ -56,29 +54,32 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if (shouldAbortClose()) {
         event->ignore();
     } else {
-        /* writeSettings(); */
+        VSLapp::mainWindowSave(this);
         event->accept();
     }
 }
-
-void MainWindow::loadFile(QString fileName)
+void MainWindow::loadFile(QString filename)
 {
+    if (filename.isEmpty())
+        return;
+
     QSettings settings;
-    QFileInfo fi(fileName);
+    QFileInfo fi(filename);
 
+    if (!fi.exists()) {
+        QMessageBox::warning(this, "File Open Error", QString("File '%1' does not exist").arg(filename));
+        return;
+    }
     settings.setValue("currentDirectory", fi.absolutePath());
-    m_recentMenu.setMostRecentFile(fileName);
+    m_recentMenu.setMostRecentFile(filename);
 
-    ui->osgForm->openFile(fileName);
+    ui->osgForm->openFile(filename);
 }
 
 bool MainWindow::shouldAbortClose()
 {
     // Ask all open documents to save/close
-    // if any object is not done then return "true"
+    // If application should not close then return "true"
 
     return false;
 }
-
-
-

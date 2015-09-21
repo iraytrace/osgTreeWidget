@@ -31,7 +31,7 @@ public slots:
     /// Called to clean up when the window is about to close
     void closeEvent(QCloseEvent *event);
 private slots:
-    void loadFile(QString fileName);
+    void loadFile(QString filename);
 
 private:
     bool shouldAbortClose();
@@ -41,6 +41,7 @@ private:
 };
 
 #endif // MAINWINDOW_H
+
 
 
 
