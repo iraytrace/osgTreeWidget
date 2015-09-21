@@ -102,6 +102,16 @@ set(YOUR_LIBRARY_DIRS
   "${Qt5_DIR}/../../bin"
   "${Qt5_DIR}/../../../bin"
   "${Qt5_DIR}/../../../lib")
+
+file(GLOB OSG_PLUGINS_DIR ${OSG_DIR}/*/osgPlugins-${OPENSCENEGRAPH_VERSION})
+message(STATUS ${OSG_PLUGINS_DIR})
+
+file(GLOB OSG_PLUGINS "${OSG_PLUGINS_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}")
+foreach (OSG_PLUGIN ${OSG_PLUGINS})
+file(COPY "${OSG_PLUGIN}"
+  DESTINATION bin/osgPlugins-${OPENSCENEGRAPH_VERSION})
+endforeach()
+
 install(CODE "
   include(BundleUtilities)
   fixup_bundle(\"${APPS}\" \"\${YOUR_PLUGINS}\" \"${YOUR_LIBRARY_DIRS}\")
