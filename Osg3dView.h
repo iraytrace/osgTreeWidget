@@ -37,11 +37,7 @@ public:
         P_ORTHO = (1<<0),
         P_PERSP = (1<<1)
     };
-    enum DrawMode {
-        D_FACET = (1<<1),
-        D_WIRE = (1<<2),
-        D_POINT = (1<<3)
-    };
+
 
     /// Let others tell what scene graph we should be drawing
     void setScene(osg::Node *root);
@@ -93,6 +89,8 @@ private:
     /// Current mouse mode
     MouseMode m_mouseMode;
 
+    bool m_mouseIsPressed;
+    int m_timeToDrawLastFrame;
     osg::Vec2d m_savedEventNDCoords;
 };
 

@@ -1,10 +1,14 @@
 #include "Osg3dView.h"
 
 #include <QMenu>
+#include <QTime>
 
 #include <osg/LightModel>
 #include <osgViewer/Renderer>
 #include <osg/ValueObject>
+#include <osg/StateSet>
+#include <osg/PolygonMode>
+
 
 static const bool debugView = false;
 #define vDebug if (debugView) qDebug
@@ -13,6 +17,7 @@ Osg3dView::Osg3dView(QWidget *parent)
     : QOpenGLWidget(parent)
     , m_viewingCore(new ViewingCore)
     , m_mouseMode(MM_ORBIT)
+    , m_mouseIsPressed(false)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, SIGNAL(customContextMenuRequested(QPoint)),
@@ -64,8 +69,15 @@ void Osg3dView::paintGL()
     cam->setViewMatrix(m_viewingCore->getInverseMatrix());
     cam->setProjectionMatrix(m_viewingCore->computeProjection());
 
+    // if m_timeToDrawLastFrame > threshold &&  m_mouseIsPressed
+    //   draw simplified
+    // else
+    //   draw the full polygon mesh
+
+    QTime frameTimer = QTime::currentTime();
     // Invoke the OSG traversal pipeline
     frame();
+    m_timeToDrawLastFrame = frameTimer.elapsed();
 
     emit updated();
 }
@@ -98,7 +110,7 @@ void Osg3dView::setMouseMode(Osg3dView::MouseMode mode)
 
 osg::Vec2d Osg3dView::getNormalized(const int ix, const int iy)
 {
-    int x, y, width, height;
+    int x=0, y=0, width=0, height=0;
     osg::Vec2d ndc;
 
     // we don't really need the x, y values but the width/height are important
@@ -130,6 +142,8 @@ void Osg3dView::mousePressEvent(QMouseEvent *event)
             m_viewingCore->pickCenter(m_savedEventNDCoords.x(),
                                       m_savedEventNDCoords.y() );
         }
+
+        m_mouseIsPressed = true;
     }
 }
 
@@ -174,6 +188,9 @@ void Osg3dView::mouseReleaseEvent(QMouseEvent *event)
 {
     vDebug("mouseReleaseEvent");
     m_savedEventNDCoords = getNormalized(event->x(), event->y());
+
+    if (event->button() == Qt::LeftButton)
+        m_mouseIsPressed = false;
 }
 
 
@@ -224,11 +241,11 @@ void Osg3dView::buildPopupMenu()
 
     sub = m_popupMenu.addMenu("DrawMode...");
     a = sub->addAction("Facets", this, SLOT(setDrawMode()));
-    a->setData(D_FACET);
+    a->setData(osg::PolygonMode::FILL);
     a = sub->addAction("Wireframe", this, SLOT(setDrawMode()));
-    a->setData(D_WIRE);
+    a->setData(osg::PolygonMode::LINE);
     a = sub->addAction("Points", this, SLOT(setDrawMode()));
-    a->setData(D_POINT);
+    a->setData(osg::PolygonMode::POINT);
 }
 
 void Osg3dView::customMenuRequested(const QPoint &pos)
@@ -289,15 +306,32 @@ void Osg3dView::setDrawMode()
     if (!a)
         return;
 
-    DrawMode drawMode = static_cast<DrawMode>(a->data().toUInt());
+
+    osg::ref_ptr<osg::StateSet> ss = this->getSceneData()->getOrCreateStateSet();
+    osg::ref_ptr<osg::PolygonMode> pm =
+               dynamic_cast<osg::PolygonMode *>
+               (ss->getAttribute(osg::StateAttribute::POLYGONMODE));
+
+    if(!pm) {
+        pm = new osg::PolygonMode;
+        ss->setAttribute(pm.get());
+    }
+    osg::PolygonMode::Mode drawMode = static_cast<osg::PolygonMode::Mode>(a->data().toUInt());
+    pm->setMode(osg::PolygonMode::FRONT_AND_BACK,
+                drawMode);
+
     switch (drawMode) {
-    case D_FACET:
+    case osg::PolygonMode::LINE:
+    case osg::PolygonMode::POINT:
+        ss->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
         break;
-    case D_WIRE:
-        break;
-    case D_POINT:
+    default:
+        ss->setMode(GL_LIGHTING, osg::StateAttribute::ON);
         break;
     }
+
+
+    update();
 }
 
 void Osg3dView::setProjection()

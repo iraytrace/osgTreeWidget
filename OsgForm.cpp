@@ -81,6 +81,8 @@ void OsgForm::addNode(osg::ref_ptr<osg::Node> n)
         m_viewingCore->fitToScreen();
     }
     setProgressBarState(false); // triggers an update()
+    ui->osg3dView->setCursor(m_stashedCursor);
+
 }
 
 void OsgForm::openFile(const QString fileName)
@@ -94,7 +96,7 @@ void OsgForm::openFile(const QString fileName)
     m_loadWatcher.setProperty("filename", fileName);
     emit showMessage(QString("loading %1").arg(fileName));
     // Start the file load.
-
+	m_stashedCursor = ui->osg3dView->cursor();
     QFuture< osg::ref_ptr<osg::Node> > future =
             QtConcurrent::run(this, &OsgForm::readNodes, fileName);
     m_loadWatcher.setFuture(future);

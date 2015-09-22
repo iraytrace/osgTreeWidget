@@ -40,6 +40,8 @@ private:
     QFutureWatcher< bool >m_saveWatcher;
     void setProgressBarState(bool turnOn);
     bool saveThread(osg::ref_ptr<osg::Node> node, const QString fileName);
+    QCursor m_stashedCursor;
+
 };
 
 #endif // OSGFORM_H

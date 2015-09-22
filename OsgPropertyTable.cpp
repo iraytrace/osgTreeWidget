@@ -9,6 +9,8 @@
 #include <osg/Geode>
 
 #include "VariantPtr.h"
+static const bool thisDebug = false;
+#define ptDebug if (thisDebug) qDebug
 
 OsgPropertyTable::OsgPropertyTable(QWidget *parent) :
     QTableWidget(parent)
@@ -23,15 +25,10 @@ OsgPropertyTable::OsgPropertyTable(QWidget *parent) :
     hideAllRows();
 }
 
-OsgPropertyTable::OsgPropertyTable(int rows, int columns, QWidget *parent)
-    : QTableWidget(rows, columns, parent)
-{
-
-}
 
 void OsgPropertyTable::displayObject(osg::ref_ptr<osg::Object> object)
 {
-    qDebug("displayObject(%s)", object->getName().c_str());
+    ptDebug("displayObject(%s)", object->getName().c_str());
 
     hideAllRows();
 
@@ -58,15 +55,15 @@ void OsgPropertyTable::itemWasClicked(QTableWidgetItem *item)
 
     QVariant v = item->data(Qt::UserRole);
 
-    qDebug("clicked %d %d %s", item->row(), item->column(), qPrintable(item->text()));
+    ptDebug("clicked %d %d %s", item->row(), item->column(), qPrintable(item->text()));
     if (v.isValid() && !v.isNull()) {
         osg::Object *obj = VariantPtr<osg::Object>::asPtr(v);
 
         if (osg::Node *n = dynamic_cast<osg::Node *>(obj)) {
-            qDebug("Node");
+            ptDebug("Node");
         }
         if (osg::Drawable *d = dynamic_cast<osg::Drawable *>(obj)) {
-            qDebug("Drawable");
+            ptDebug("Drawable");
         }
     }
 }
