@@ -37,7 +37,7 @@ private:
     bool shouldAbortClose();
 
     Ui::MainWindow *ui;
-    RecentFiles m_recentMenu;
+    RecentFiles m_recentFiles;
 };
 
 #endif // MAINWINDOW_H

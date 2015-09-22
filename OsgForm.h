@@ -17,11 +17,15 @@ public:
     explicit OsgForm(QWidget *parent = 0);
     ~OsgForm();
 
-
+signals:
+    void showMessage(QString);
 public slots:
     void openFile(const QString fileName);
     bool saveFile(const QString fileName);
+    void addNode(osg::ref_ptr<osg::Node> n);
 
+protected slots:
+    void wrieNodesFinished();
 private slots:
     void readNodesFinished();
 
@@ -32,7 +36,10 @@ private:
     osg::ref_ptr<ViewingCore> m_viewingCore;
     osg::ref_ptr<osg::Node> readNodes(const QString fileName);
 
-    QFutureWatcher< osg::ref_ptr<osg::Node> >m_watcher;
+    QFutureWatcher< osg::ref_ptr<osg::Node> >m_loadWatcher;
+    QFutureWatcher< bool >m_saveWatcher;
+    void setProgressBarState(bool turnOn);
+    bool saveThread(osg::ref_ptr<osg::Node> node, const QString fileName);
 };
 
 #endif // OSGFORM_H

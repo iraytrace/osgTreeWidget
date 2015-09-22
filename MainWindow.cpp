@@ -11,13 +11,14 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_recentMenu(this)
+    m_recentFiles(this)
 
 {
     ui->setupUi(this);
-    m_recentMenu.attachToMenuAfterItem(ui->menuFile, "Open...", SLOT(loadFile(QString)));
+    m_recentFiles.attachToMenuAfterItem(ui->menuFile, "Open...", SLOT(loadFile(QString)));
     VSLapp::mainWindowSetup(this);
-
+    connect(ui->osgForm, SIGNAL(showMessage(QString)),
+            ui->statusBar, SLOT(showMessage(QString)));
 }
 
 MainWindow::~MainWindow()
@@ -35,13 +36,19 @@ void MainWindow::on_actionFileOpen_triggered()
 
 void MainWindow::on_actionFileSave_triggered()
 {
-    qDebug("save");
+    ui->osgForm->saveFile(
+                m_recentFiles.getRecentFiles().at(0));
 }
 
 void MainWindow::on_actionFileSaveAs_triggered()
 {
-    qDebug("saveAs");
-
+    QSettings settings;
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    "Save File as",
+                                                    settings.value("currentDirectory").toString()
+                                                    );
+    ui->osgForm->saveFile(fileName);
+    m_recentFiles.setMostRecentFile(fileName);
 }
 
 void MainWindow::on_actionHelpAbout_triggered()
@@ -71,17 +78,9 @@ void MainWindow::loadFile(QString filename)
         return;
     }
     settings.setValue("currentDirectory", fi.absolutePath());
-    m_recentMenu.setMostRecentFile(filename);
+    m_recentFiles.setMostRecentFile(filename);
 
-    if (filename.endsWith(".osg") ||
-            filename.endsWith(".ive") ||
-            filename.endsWith(".osgt") ||
-            filename.endsWith(".osgb") ||
-            filename.endsWith(".osgx") ||
-            filename.endsWith(".obj")
-            ) {
         ui->osgForm->openFile(filename);
-    }
 }
 
 bool MainWindow::shouldAbortClose()
