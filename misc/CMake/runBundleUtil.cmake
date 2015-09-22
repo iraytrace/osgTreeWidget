@@ -8,6 +8,7 @@ set(BUNDLE_DIRS
   "${BIN_DIR}/bin/${CMAKE_BUILD_TYPE}"
   "${BIN_DIR}/lib"
   "${BIN_DIR}/lib/${CMAKE_BUILD_TYPE}"
+"${GDAL_LIBDIR}/../bin"
 "C:/Program Files/OpenSceneGraph/bin"
 "C:/Program Files/OpenSceneGraph/lib"
   "${Qt5_DIR}/../../"

@@ -73,7 +73,15 @@ void MainWindow::loadFile(QString filename)
     settings.setValue("currentDirectory", fi.absolutePath());
     m_recentMenu.setMostRecentFile(filename);
 
-    ui->osgForm->openFile(filename);
+    if (filename.endsWith(".osg") ||
+            filename.endsWith(".ive") ||
+            filename.endsWith(".osgt") ||
+            filename.endsWith(".osgb") ||
+            filename.endsWith(".osgx") ||
+            filename.endsWith(".obj")
+            ) {
+        ui->osgForm->openFile(filename);
+    }
 }
 
 bool MainWindow::shouldAbortClose()

@@ -57,10 +57,9 @@ void OsgForm::openFile(const QString fileName)
         QMessageBox::warning(this, "Loading in progress", "Please wait until the previous load has completed");
         return;
     }
-    connect(&m_watcher, SIGNAL(finished()),
-            this, SLOT(readNodesFinished()));
 
-    // Start the computation.
+    // Start the file load.
+    connect(&m_watcher, SIGNAL(finished()), this, SLOT(readNodesFinished()));
     QFuture< osg::ref_ptr<osg::Node> > future = QtConcurrent::run(this, &OsgForm::readNodes, fileName);
     m_watcher.setFuture(future);
 
@@ -73,7 +72,6 @@ bool OsgForm::saveFile(const QString fileName)
 {
     if (m_root->getNumChildren() == 1) {
         return osgDB::writeNodeFile(*m_root->getChild(0), fileName.toStdString());
-
     }
 
     return osgDB::writeNodeFile(*m_root, fileName.toStdString());

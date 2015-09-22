@@ -16,6 +16,8 @@ class OsgForm : public QWidget
 public:
     explicit OsgForm(QWidget *parent = 0);
     ~OsgForm();
+
+
 public slots:
     void openFile(const QString fileName);
     bool saveFile(const QString fileName);
