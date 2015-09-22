@@ -28,7 +28,7 @@ macro(find_and_install_dependencies EXEC_NAME)
                        -D BIN_DIR="${CMAKE_BINARY_DIR}"
                        -D CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
                        -D GDAL_LIBDIR="${GDAL_LIBDIR}"
-                       -D Qt5Core_DIR="${Qt5Core_DIR}"
+                       -D Qt5_DIR="${Qt5_DIR}"
                        -D OSG_DIR="${OSG_DIR}"
                        -P "${CMAKE_SOURCE_DIR}/misc/CMake/runBundleUtil.cmake"
                        )
