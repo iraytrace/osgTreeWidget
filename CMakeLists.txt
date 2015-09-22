@@ -18,7 +18,8 @@ set(PLUGIN_DIR ${RUNTIME_DIR}/plugins)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH    ${CMAKE_BINARY_DIR}/lib)
 
-set(OSG_DIR "C:/Users/Lee/Documents/src/osg/install340")
+#set(OSG_DIR "C:/Users/Lee/Documents/src/osg/install340")
+set(OSG_DIR "C:/Users/Lee/Desktop/StingrayLeeBuild/Installed")
 find_package(OpenSceneGraph 3.0.1 COMPONENTS osg osgDB osgViewer osgGA osgUtil OpenThreads REQUIRED)
 include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 
@@ -33,7 +34,7 @@ INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
 
 # Get the Qt stuff set up.
 # if cmake cannot find Qt you can set Qt5_DIR or uncomment next line
-set(Qt5_DIR "C:/Qt/5.5/msvc2013_64/lib/cmake/Qt5")
+set(Qt5_DIR "C:/Qt/5.5/msvc2013_64/lib/cmake/Qt5" CACHE PATH "Qt cmake dir")
 find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
 
 # make all sources part of the build
@@ -84,7 +85,7 @@ install(TARGETS osgTreeWidget
     BUNDLE DESTINATION . COMPONENT Runtime
     RUNTIME DESTINATION bin COMPONENT Runtime )
 
-find_and_install_dependencies(osgTreeWidget)
+
 # The following is from http://www.vtk.org/Wiki/CMake/CPack/BundleUtilities/Examples/Linux/Automatic
 SET(APPS "\${CMAKE_INSTALL_PREFIX}/bin/osgTreeWidget${CMAKE_EXECUTABLE_SUFFIX}")
 set(YOUR_PLUGINS "") #empty for now
@@ -111,6 +112,8 @@ foreach (OSG_PLUGIN ${OSG_PLUGINS})
 file(COPY "${OSG_PLUGIN}"
   DESTINATION bin/osgPlugins-${OPENSCENEGRAPH_VERSION})
 endforeach()
+
+find_and_install_dependencies(osgTreeWidget)
 
 install(CODE "
   include(BundleUtilities)
