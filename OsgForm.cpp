@@ -49,6 +49,7 @@ void OsgForm::readNodesFinished()
     ui->osg3dView->update();
     ui->progressBar->hide();
     ui->progressBar->setMaximum(100);
+    ui->osg3dView->setCursor(m_stashedCursor);
 }
 
 void OsgForm::openFile(const QString fileName)
@@ -64,6 +65,8 @@ void OsgForm::openFile(const QString fileName)
     QFuture< osg::ref_ptr<osg::Node> > future = QtConcurrent::run(this, &OsgForm::readNodes, fileName);
     m_watcher.setFuture(future);
 
+    m_stashedCursor = ui->osg3dView->cursor();
+    ui->osg3dView->setCursor(Qt::WaitCursor);
     ui->progressBar->setMinimum(0);
     ui->progressBar->setMaximum(0);
     ui->progressBar->show();

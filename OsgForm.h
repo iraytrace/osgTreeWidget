@@ -31,6 +31,7 @@ private:
     osg::ref_ptr<osg::Node> readNodes(const QString fileName);
 
     QFutureWatcher< osg::ref_ptr<osg::Node> >m_watcher;
+    QCursor m_stashedCursor;
 };
 
 #endif // OSGFORM_H
