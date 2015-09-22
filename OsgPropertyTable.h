@@ -19,7 +19,6 @@ class OsgPropertyTable : public QTableWidget
     Q_OBJECT
 public:
     OsgPropertyTable(QWidget * parent = 0);
-    OsgPropertyTable(int rows, int columns, QWidget * parent = 0);
 
 signals:
 
