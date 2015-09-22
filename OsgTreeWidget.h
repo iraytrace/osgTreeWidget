@@ -3,6 +3,7 @@
 
 #include <QTreeWidget>
 #include <osg/Node>
+#include <QFutureWatcher>
 
 class OsgTreeWidget : public QTreeWidget
 {
@@ -10,7 +11,7 @@ class OsgTreeWidget : public QTreeWidget
 public:
     OsgTreeWidget(QWidget * parent = 0);
 
-    void addObject(osg::Object *object, QTreeWidgetItem *parentItem = (QTreeWidgetItem *)0);
+    void addObject(osg::Object *object);
 
 signals:
     void currentObject(osg::ref_ptr<osg::Object> object);
@@ -19,8 +20,12 @@ public slots:
     void resizeAllColumns();
 private slots:
     void currentItemWasChanged(QTreeWidgetItem * current, QTreeWidgetItem *);
-private:
+    void addObjectFinished();
 
+private:
+    QFutureWatcher< QTreeWidgetItem * >m_watcher;
+    QTreeWidgetItem *addObjectItem(osg::Object *object, const QString parentName);
+    QCursor m_stashedCursor;
 };
 
 #endif // OSGTREEWIDGET_H

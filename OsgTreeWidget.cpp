@@ -3,10 +3,15 @@
 
 #include <osg/Group>
 #include <osg/Geode>
+#include <QtConcurrent/QtConcurrent>
+#include <QFuture>
+#include <QMessageBox>
 
 #include <string>
+
 static const bool debugTreeWidget = false;
 #define twDebug if (debugTreeWidget) qDebug
+
 #include "VariantPtr.h"
 
 OsgTreeWidget::OsgTreeWidget(QWidget *parent) :QTreeWidget(parent)
@@ -37,19 +42,19 @@ OsgTreeWidget::OsgTreeWidget(QWidget *parent) :QTreeWidget(parent)
 #endif
 }
 
+QTreeWidgetItem * OsgTreeWidget::addObjectItem(osg::Object *object,
+                                               QString parentName)
 
-void OsgTreeWidget::addObject(osg::Object *object, QTreeWidgetItem *parentItem)
 {
     QTreeWidgetItem *newItem = new QTreeWidgetItem;
 
-
     if (object->getName().size() == 0) {
         QString name;
-        if (parentItem) {
-            name = QString("%1_%2").arg(parentItem->text(0)).arg(object->className());
-        } else {
+        if (parentName.size() > 0)
+            name = QString("%1_%2").arg(parentName).arg(object->className());
+         else
             name = object->className();
-        }
+
         object->setName(qPrintable(name));
     }
 
@@ -64,23 +69,44 @@ void OsgTreeWidget::addObject(osg::Object *object, QTreeWidgetItem *parentItem)
 
         if (osg::Group *group = n->asGroup()) {
             for (unsigned i = 0 ; i < group->getNumChildren() ; i++) {
-                addObject(group->getChild(i), newItem);
+                newItem->addChild(addObjectItem(group->getChild(i), newItem->text(0)));
             }
         }
         if (osg::Geode *geode = n->asGeode()) {
             for (unsigned i = 0 ; i < geode->getNumDrawables() ; i++) {
                 osg::Object *drawableObject = geode->getDrawable(i);
-                addObject(drawableObject, newItem);
+                newItem->addChild(addObjectItem(drawableObject, newItem->text(0)));
             }
         }
     }
 
-    if (!parentItem) {
-        this->addTopLevelItem(newItem);
-    } else {
-        parentItem->addChild(newItem);
-    }
+    return newItem;
+}
+
+void OsgTreeWidget::addObjectFinished()
+{
+    QTreeWidgetItem *newItem = m_watcher.result();
+    this->addTopLevelItem(newItem);
     resizeAllColumns();
+    this->setCursor(m_stashedCursor);
+}
+
+void OsgTreeWidget::addObject(osg::Object *object)
+{
+    if (m_watcher.isRunning()) {
+        QMessageBox::warning(this, "Loading in progress", "Please wait until the previous load has completed");
+        return;
+    }
+    connect(&m_watcher, SIGNAL(finished()),
+            this, SLOT(addObjectFinished()));
+
+    // Start the computation.
+    QFuture< QTreeWidgetItem * > future =
+            QtConcurrent::run(this, &OsgTreeWidget::addObjectItem, object, QString());
+    m_watcher.setFuture(future);
+
+    m_stashedCursor = this->cursor();
+    this->setCursor(Qt::WaitCursor);
 }
 
 void OsgTreeWidget::resizeAllColumns()
