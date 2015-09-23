@@ -9,6 +9,7 @@
 class QTableWidgetItem;
 class QTreeWidgetItem;
 class QCheckBox;
+class QPushButton;
 namespace Ui {
 class OsgForm;
 }
@@ -30,27 +31,31 @@ public slots:
     void setCameraMask(osg::Node::NodeMask mask);
     void itemWasChangedInTable(QTableWidgetItem *tabwi);
     void itemWasChangedInTree(QTreeWidgetItem *treewi, int col);
-
+    void setCameraMaskFromLineEdit();
 private slots:
     void wrieNodesFinished();
     void readNodesFinished();
     void tweakCameraMaskBit(int state);
     void setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask);
+    void splitterMoved(int a, int b);
 
 private:
+    void setupUserInterface();
+    void buildLayerBox();
+    void setProgressBarState(bool turnOn);
+    bool saveThread(osg::ref_ptr<osg::Node> node, const QString fileName);
+    osg::ref_ptr<osg::Node> readNodes(const QString fileName);
+
+
     Ui::OsgForm *ui;
 
     osg::ref_ptr<osg::Group> m_root;
     osg::ref_ptr<ViewingCore> m_viewingCore;
-    osg::ref_ptr<osg::Node> readNodes(const QString fileName);
 
     QFutureWatcher< osg::ref_ptr<osg::Node> >m_loadWatcher;
     QFutureWatcher< bool >m_saveWatcher;
-    void setProgressBarState(bool turnOn);
-    bool saveThread(osg::ref_ptr<osg::Node> node, const QString fileName);
     QCursor m_stashedCursor;
     QVector<QCheckBox *> m_checkBoxes;
-    void setupUserInterface();
 };
 
 #endif // OSGFORM_H

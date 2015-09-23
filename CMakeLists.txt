@@ -19,7 +19,9 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH    ${CMAKE_BINARY_DIR}/lib)
 
 #set(OSG_DIR "C:/Users/Lee/Documents/src/osg/install340")
+if (WIN32)
 set(OSG_DIR "$ENV{USERPROFILE}/sw") 
+endif (WIN32)
 find_package(OpenSceneGraph 3.0.1 COMPONENTS osg osgDB osgViewer osgGA osgUtil OpenThreads )
 include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 
@@ -27,12 +29,11 @@ include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 #find_package(GDAL REQUIRED)
 #INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
 
-
-
-
 # Get the Qt stuff set up.
 # if cmake cannot find Qt you can set Qt5_DIR or uncomment next line
+if (WIN32)
 set(Qt5_DIR "C:/Qt/5.5/msvc2013_64/lib/cmake/Qt5" CACHE PATH "Qt cmake dir")
+endif (WIN32)
 find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
 
 # make all sources part of the build
@@ -70,7 +71,7 @@ target_link_LIBRARIES(osgTreeWidget
     Qt5::Widgets
     Qt5::OpenGL
    ${OPENSCENEGRAPH_LIBRARIES}
-${GDAL_LIBRARY}
+#${GDAL_LIBRARY}
   )
 set_target_properties(osgTreeWidget
     PROPERTIES
@@ -87,8 +88,8 @@ install(TARGETS osgTreeWidget
 # The following is from http://www.vtk.org/Wiki/CMake/CPack/BundleUtilities/Examples/Linux/Automatic
 SET(APPS "\${CMAKE_INSTALL_PREFIX}/bin/osgTreeWidget${CMAKE_EXECUTABLE_SUFFIX}")
 set(YOUR_PLUGINS "") #empty for now
-get_filename_component(GDAL_LIBDIR ${GDAL_LIBRARY} DIRECTORY)
-message(STATUS "gdal_libdir>${GDAL_LIBDIR}/../bin<")
+#get_filename_component(GDAL_LIBDIR ${GDAL_LIBRARY} DIRECTORY)
+#message(STATUS "gdal_libdir>${GDAL_LIBDIR}/../bin<")
 set(YOUR_LIBRARY_DIRS
   "${CMAKE_INSTALL_PREFIX}/bin"
   "${CMAKE_INSTALL_PREFIX}/lib"
@@ -96,7 +97,7 @@ set(YOUR_LIBRARY_DIRS
   "${CMAKE_BINARY_DIR}/lib"
     "${OSG_DIR}/bin"
     "${OSG_DIR}/lib"
-    "${GDAL_LIBDIR}/../bin"
+#    "${GDAL_LIBDIR}/../bin"
   "${Qt5_DIR}/../../"
   "${Qt5_DIR}/../../bin"
   "${Qt5_DIR}/../../../bin"
