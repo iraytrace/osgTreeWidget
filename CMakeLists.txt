@@ -20,12 +20,12 @@ set(LIBRARY_OUTPUT_PATH    ${CMAKE_BINARY_DIR}/lib)
 
 #set(OSG_DIR "C:/Users/Lee/Documents/src/osg/install340")
 set(OSG_DIR "$ENV{USERPROFILE}/sw") 
-find_package(OpenSceneGraph 3.0.1 COMPONENTS osg osgDB osgViewer osgGA osgUtil OpenThreads REQUIRED)
+find_package(OpenSceneGraph 3.0.1 COMPONENTS osg osgDB osgViewer osgGA osgUtil OpenThreads )
 include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 
-set(ENV{GDAL_DIR} "$ENV{USERPROFILE}/sw")
-find_package(GDAL REQUIRED)
-INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
+#set(ENV{GDAL_DIR} "$ENV{USERPROFILE}/sw")
+#find_package(GDAL REQUIRED)
+#INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
 
 
 

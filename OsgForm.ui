@@ -105,10 +105,22 @@
         <property name="text">
          <string>Property</string>
         </property>
+        <property name="toolTip">
+         <string>Name of the Object attribute </string>
+        </property>
+        <property name="whatsThis">
+         <string>Name of the Object attribute </string>
+        </property>
        </column>
        <column>
         <property name="text">
          <string>Value</string>
+        </property>
+        <property name="toolTip">
+         <string>The value of the property named in the first column</string>
+        </property>
+        <property name="whatsThis">
+         <string>The value of the property named in the first column</string>
         </property>
        </column>
       </widget>

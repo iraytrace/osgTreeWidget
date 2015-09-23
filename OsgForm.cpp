@@ -11,6 +11,7 @@
 #include <QTableWidgetItem>
 #include <QTreeWidgetItem>
 
+#include "VariantPtr.h"
 
 OsgForm::OsgForm(QWidget *parent) :
     QWidget(parent),
@@ -28,7 +29,7 @@ OsgForm::OsgForm(QWidget *parent) :
     connect(ui->osgPropertyTable, SIGNAL(itemChanged(QTableWidgetItem*)),
             this, SLOT(itemWasChangedInTable(QTableWidgetItem*)));
     connect(ui->osgTreeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
-            this, SLOT(itemWasChangedInTree(QTreeWidgetItem*)));
+            this, SLOT(itemWasChangedInTree(QTreeWidgetItem*, int)));
 
     ui->osg3dView->setScene(m_root);
     m_viewingCore = ui->osg3dView->getViewingCore();
@@ -98,16 +99,29 @@ void OsgForm::tweakCameraMaskBit(int state)
 
 void OsgForm::itemWasChangedInTable(QTableWidgetItem *tabwi)
 {
+
     // get identity of value changed
     // update in scenegraph
     // update in tree if appropriate
 }
 
-void OsgForm::itemWasChangedInTree(QTreeWidgetItem *treewi)
+void OsgForm::itemWasChangedInTree(QTreeWidgetItem *treewi, int col)
 {
-    // get identity of value changed
-    // update in scenegraph
-    // update in table if appropriate
+    osg::Object *obj = VariantPtr<osg::Object>::asPtr(treewi->data(0,  Qt::UserRole));
+    if (col == 0) {
+        // user set name
+        obj->setName(treewi->text(col).toStdString());
+    } else if ( col == 2) {
+        // user set flags
+        if (osg::Node *n = dynamic_cast<osg::Node *>(obj)) {
+            bool ok = false;
+            unsigned mask = treewi->text(col).toUInt(&ok, 16);
+            if (ok) {
+                n->setNodeMask(mask);
+            }
+        }
+    }
+    ui->osgPropertyTable->displayObject(obj);
 }
 
 

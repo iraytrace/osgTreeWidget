@@ -29,7 +29,7 @@ public slots:
     void addNode(osg::ref_ptr<osg::Node> n);
     void setCameraMask(osg::Node::NodeMask mask);
     void itemWasChangedInTable(QTableWidgetItem *tabwi);
-    void itemWasChangedInTree(QTreeWidgetItem *treewi);
+    void itemWasChangedInTree(QTreeWidgetItem *treewi, int col);
 
 private slots:
     void wrieNodesFinished();
