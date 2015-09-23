@@ -19,13 +19,11 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH    ${CMAKE_BINARY_DIR}/lib)
 
 #set(OSG_DIR "C:/Users/Lee/Documents/src/osg/install340")
-set(OSG_DIR "C:/Users/Lee/Desktop/StingrayLeeBuild/Installed")
+set(OSG_DIR "$ENV{USERPROFILE}/sw") 
 find_package(OpenSceneGraph 3.0.1 COMPONENTS osg osgDB osgViewer osgGA osgUtil OpenThreads REQUIRED)
 include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 
-set(GDAL_DIR "C:/Users/Lee/Desktop/StingrayLeeBuild/Installed")
-set(GDAL_INCLUDE_DIR "C:/Users/Lee/Desktop/StingrayLeeBuild/Installed/include")
-set(GDAL_LIBRARY "C:/Users/Lee/Desktop/StingrayLeeBuild/Installed/lib/gdal_i.lib")
+set(ENV{GDAL_DIR} "$ENV{USERPROFILE}/sw")
 find_package(GDAL REQUIRED)
 INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
 

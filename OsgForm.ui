@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>478</width>
+    <height>533</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Form</string>
@@ -64,7 +70,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QSplitter" name="splitterColumn">
+     <widget class="QSplitter" name="splitter">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
@@ -110,17 +116,19 @@
        <property name="title">
         <string>Camera</string>
        </property>
-       <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Eye Pt</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <property name="leftMargin">
+         <number>1</number>
+        </property>
+        <property name="topMargin">
+         <number>1</number>
+        </property>
+        <property name="rightMargin">
+         <number>1</number>
+        </property>
+        <property name="bottomMargin">
+         <number>1</number>
+        </property>
         <item row="0" column="1">
          <widget class="QLineEdit" name="lineEdit"/>
         </item>
@@ -134,11 +142,25 @@
           </property>
          </widget>
         </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Eye Pt</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
         <item row="1" column="1">
          <widget class="QLineEdit" name="lineEdit_2"/>
         </item>
         <item row="2" column="0" colspan="2">
-         <widget class="QComboBox" name="comboBox"/>
+         <widget class="QGroupBox" name="layersGroupBox">
+          <property name="title">
+           <string>Layers</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

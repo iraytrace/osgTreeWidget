@@ -9,7 +9,7 @@
 #include <osg/Geode>
 
 #include "VariantPtr.h"
-static const bool thisDebug = false;
+static const bool thisDebug = true;
 #define ptDebug if (thisDebug) qDebug
 
 OsgPropertyTable::OsgPropertyTable(QWidget *parent) :
@@ -20,6 +20,7 @@ OsgPropertyTable::OsgPropertyTable(QWidget *parent) :
 
     connect(this, SIGNAL(itemClicked(QTableWidgetItem*)),
             this, SLOT(itemWasClicked(QTableWidgetItem*)));
+
     setColumnCount(2);
 
     hideAllRows();

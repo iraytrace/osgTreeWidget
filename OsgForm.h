@@ -5,6 +5,10 @@
 #include <QFutureWatcher>
 #include <osg/Group>
 #include "ViewingCore.h"
+
+class QTableWidgetItem;
+class QTreeWidgetItem;
+class QCheckBox;
 namespace Ui {
 class OsgForm;
 }
@@ -23,11 +27,15 @@ public slots:
     void openFile(const QString fileName);
     bool saveFile(const QString fileName);
     void addNode(osg::ref_ptr<osg::Node> n);
+    void setCameraMask(osg::Node::NodeMask mask);
+    void itemWasChangedInTable(QTableWidgetItem *tabwi);
+    void itemWasChangedInTree(QTreeWidgetItem *treewi);
 
-protected slots:
-    void wrieNodesFinished();
 private slots:
+    void wrieNodesFinished();
     void readNodesFinished();
+    void tweakCameraMaskBit(int state);
+    void setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask);
 
 private:
     Ui::OsgForm *ui;
@@ -41,7 +49,8 @@ private:
     void setProgressBarState(bool turnOn);
     bool saveThread(osg::ref_ptr<osg::Node> node, const QString fileName);
     QCursor m_stashedCursor;
-
+    QVector<QCheckBox *> m_checkBoxes;
+    void setupUserInterface();
 };
 
 #endif // OSGFORM_H

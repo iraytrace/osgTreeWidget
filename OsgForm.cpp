@@ -7,6 +7,10 @@
 #include <osgDB/ReadFile>
 #include <osgDB/WriteFile>
 #include <QMessageBox>
+#include <QCheckBox>
+#include <QTableWidgetItem>
+#include <QTreeWidgetItem>
+
 
 OsgForm::OsgForm(QWidget *parent) :
     QWidget(parent),
@@ -14,12 +18,18 @@ OsgForm::OsgForm(QWidget *parent) :
     m_root(new osg::Group)
 {
     ui->setupUi(this);
+    setupUserInterface();
     connect(ui->osgTreeWidget, SIGNAL(currentObject(osg::ref_ptr<osg::Object>)),
             ui->osgPropertyTable, SLOT(displayObject(osg::ref_ptr<osg::Object>)));
     connect(&m_loadWatcher, SIGNAL(finished()),
             this, SLOT(readNodesFinished()));
     connect(&m_saveWatcher, SIGNAL(finished()),
             this, SLOT(wrieNodesFinished()) );
+    connect(ui->osgPropertyTable, SIGNAL(itemChanged(QTableWidgetItem*)),
+            this, SLOT(itemWasChangedInTable(QTableWidgetItem*)));
+    connect(ui->osgTreeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
+            this, SLOT(itemWasChangedInTree(QTreeWidgetItem*)));
+
     ui->osg3dView->setScene(m_root);
     m_viewingCore = ui->osg3dView->getViewingCore();
     QList<int> sz;
@@ -32,6 +42,78 @@ OsgForm::OsgForm(QWidget *parent) :
 OsgForm::~OsgForm()
 {
     delete ui;
+}
+
+void OsgForm::setupUserInterface()
+{
+#define numRows 4
+#define numCols 8
+    QGroupBox *gb = ui->layersGroupBox;
+    QGridLayout *grid = new QGridLayout(gb);
+    for (int row=0 ; row < numRows ; row++) {
+        for (int col=0 ; col < numCols ; col++) {
+            QCheckBox * cb = new QCheckBox(gb);
+            cb->setCheckable(true);
+            cb->setChecked(true);
+            grid->addWidget(cb, row, col);
+            connect(cb, SIGNAL(stateChanged(int)),
+                    this, SLOT(tweakCameraMaskBit(int)));
+            m_checkBoxes.append(cb);
+        }
+    }
+}
+
+void OsgForm::setCameraMask(osg::Node::NodeMask mask)
+{
+    qDebug("SET Mask %08x", (unsigned)mask);
+    ui->osg3dView->getCamera()->setNodeMask(mask);
+    for (int i=0 ; i < numRows*numCols ; i++) {
+        bool tf = mask & (1<<i);
+        m_checkBoxes.at(i)->setChecked(tf);
+    }
+    ui->osg3dView->update();
+}
+
+
+void OsgForm::tweakCameraMaskBit(int state)
+{
+    QCheckBox * cb = dynamic_cast<QCheckBox *>(sender());
+    if (!cb) return;
+
+    int idx = m_checkBoxes.indexOf(cb);
+    if (idx < 0) return;
+    osg::Node::NodeMask mask = ui->osg3dView->getCamera()->getNodeMask();
+    qDebug("old Mask %08x", (unsigned)mask);
+    unsigned bit = 1 << idx;
+    if (state == Qt::Checked) {
+        qDebug("set bit %d to %s", idx, "yes");
+        mask |= bit;
+    } else {
+        qDebug("set bit %d to %s", idx, "no");
+        mask &= ~bit;
+    }
+    qDebug("new Mask %08x", (unsigned)mask);
+    setCameraMask(mask);
+}
+
+void OsgForm::itemWasChangedInTable(QTableWidgetItem *tabwi)
+{
+    // get identity of value changed
+    // update in scenegraph
+    // update in tree if appropriate
+}
+
+void OsgForm::itemWasChangedInTree(QTreeWidgetItem *treewi)
+{
+    // get identity of value changed
+    // update in scenegraph
+    // update in table if appropriate
+}
+
+
+void OsgForm::setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask)
+{
+
 }
 
 osg::ref_ptr<osg::Node> OsgForm::readNodes(const QString fileName)
@@ -71,6 +153,8 @@ void OsgForm::readNodesFinished()
     }
     addNode(loaded);
 }
+
+
 void OsgForm::addNode(osg::ref_ptr<osg::Node> n)
 {
     setProgressBarState(true);
