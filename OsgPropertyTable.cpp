@@ -9,7 +9,7 @@
 #include <osg/Geode>
 
 #include "VariantPtr.h"
-static const bool thisDebug = true;
+static const bool thisDebug = false;
 #define ptDebug if (thisDebug) qDebug
 
 OsgPropertyTable::OsgPropertyTable(QWidget *parent) :

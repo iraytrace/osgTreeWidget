@@ -37,7 +37,6 @@ private slots:
     void readNodesFinished();
     void tweakCameraMaskBit(int state);
     void setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask);
-    void splitterMoved(int a, int b);
 
 private:
     void setupUserInterface();

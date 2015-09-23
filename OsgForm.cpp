@@ -72,8 +72,6 @@ void OsgForm::setupUserInterface()
             this, SLOT(itemWasChangedInTree(QTreeWidgetItem*, int)));
     connect(ui->cameraMaskLineEdit, SIGNAL(editingFinished()),
             this, SLOT(setCameraMaskFromLineEdit()));
-    connect(ui->splitter, SIGNAL(splitterMoved(int,int)),
-            this, SLOT(splitterMoved(int,int)));
 
     QList<int> sz;
     sz.append(100);
@@ -95,7 +93,6 @@ void OsgForm::setupUserInterface()
 
 void OsgForm::setCameraMask(osg::Node::NodeMask mask)
 {
-    qDebug("SET Mask %08x", (unsigned)mask);
     ui->osg3dView->getCamera()->setCullMask(mask);
     for (int i=0 ; i < numRowsOfLayerButtons*numColsOfLayerButtons ; i++) {
         bool tf = mask & (1<<i);
@@ -117,16 +114,12 @@ void OsgForm::tweakCameraMaskBit(int state)
     int idx = m_checkBoxes.indexOf(cb);
     if (idx < 0) return;
     osg::Node::NodeMask mask = ui->osg3dView->getCamera()->getCullMask();
-    qDebug("old Mask %08x", (unsigned)mask);
     unsigned bit = 1 << idx;
     if (state == Qt::Checked) {
-        qDebug("set bit %d to %s", idx, "yes");
         mask |= bit;
     } else {
-        qDebug("set bit %d to %s", idx, "no");
         mask &= ~bit;
     }
-    qDebug("new Mask %08x", (unsigned)mask);
     setCameraMask(mask);
 }
 
@@ -175,11 +168,6 @@ void OsgForm::setCameraMaskFromLineEdit()
 void OsgForm::setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask)
 {
 
-}
-
-void OsgForm::splitterMoved(int a, int b)
-{
-    qDebug("moved %d %d", a, b);
 }
 
 osg::ref_ptr<osg::Node> OsgForm::readNodes(const QString fileName)
