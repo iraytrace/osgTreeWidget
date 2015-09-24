@@ -144,6 +144,7 @@ osg::Vec2d Osg3dView::getNormalized(const int ix, const int iy)
 }
 void Osg3dView::pickAnObjectFromView()
 {
+    osg::ref_ptr<osgUtil::IntersectionVisitor> m_intersectionVisitor;
     osg::Vec3d startPoint;
     osg::Vec3d farPoint =
             m_viewingCore->getFarPoint(m_savedEventNDCoords.x(),
@@ -284,17 +285,17 @@ void Osg3dView::buildPopupMenu()
     a->setData(QVariant(MM_SELECT));
 
     sub = m_popupMenu.addMenu("Std View...");
-    a = sub->addAction("Top", this, SLOT(setStandardView()));
+    a = sub->addAction("Top", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_T));
     a->setData(V_TOP);
-    a = sub->addAction("Bottom", this, SLOT(setStandardView()));
+    a = sub->addAction("Bottom", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_U));
     a->setData(V_BOTTOM);
-    a = sub->addAction("Front", this, SLOT(setStandardView()));
+    a = sub->addAction("Front", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_F));
     a->setData(V_FRONT);
-    a = sub->addAction("Back", this, SLOT(setStandardView()));
+    a = sub->addAction("Back", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_B));
     a->setData(V_BACK);
-    a = sub->addAction("Right", this, SLOT(setStandardView()));
+    a = sub->addAction("Right", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_R));
     a->setData(V_RIGHT);
-    a = sub->addAction("Left", this, SLOT(setStandardView()));
+    a = sub->addAction("Left", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_L));
     a->setData(V_LEFT);
 
     sub = m_popupMenu.addMenu("Projection...");
@@ -444,11 +445,24 @@ void Osg3dView::keyPressEvent(QKeyEvent *event)
 {
     int key = event->key();
 
+    bool isShifted = event->modifiers() & Qt::ShiftModifier;
+
     switch (key) {
+    case Qt::Key_T: if (isShifted) m_viewingCore->viewTop(); update(); break;
+    case Qt::Key_L: if (isShifted) m_viewingCore->viewLeft(); update(); break;
+    case Qt::Key_B: if (isShifted) m_viewingCore->viewBack(); update(); break;
+    case Qt::Key_F: if (isShifted) m_viewingCore->viewFront(); update(); break;
+    case Qt::Key_U: if (isShifted) m_viewingCore->viewBottom(); update(); break;
     case Qt::Key_O: setMouseMode(MM_ORBIT); break;
     case Qt::Key_P: setMouseMode(MM_PAN); break;
     case Qt::Key_Z: setMouseMode(MM_ZOOM); break;
-    case Qt::Key_R: setMouseMode(MM_ROTATE); break;
+    case Qt::Key_R:
+        if (isShifted) {
+            m_viewingCore->viewRight();
+            update();
+        }else
+            setMouseMode(MM_ROTATE);
+        break;
     case Qt::Key_C: setMouseMode(MM_PICK_CENTER); break;
     case Qt::Key_S: setMouseMode(MM_SELECT); break;
     }

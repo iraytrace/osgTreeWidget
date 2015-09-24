@@ -842,42 +842,42 @@ bool ViewingCore::intersectPlaneRay( osg::Vec3d& result, const osg::Vec4d& plane
 
 void ViewingCore::viewTop()
 {
-    computeInitialView();
+//    computeInitialView();
     _viewUp = osg::Vec3d(0., 1., 0.);
     _viewDir = osg::Vec3d(0., 0., -1.);
 }
 
 void ViewingCore::viewBottom()
 {
-    computeInitialView();
+//    computeInitialView();
     _viewUp = osg::Vec3d(0., -1., 0.);
     _viewDir = osg::Vec3d(0., 0., 1.);
 }
 
 void ViewingCore::viewRight()
 {
-    computeInitialView();
+//    computeInitialView();
     _viewUp = osg::Vec3d(0., 0., 1.);
     _viewDir = osg::Vec3d(0., 1., 0.);
 }
 
 void ViewingCore::viewLeft()
 {
-    computeInitialView();
+//    computeInitialView();
     _viewUp = osg::Vec3d(0., 0., 1.);
     _viewDir = osg::Vec3d(0., -1., 0.);
 }
 
 void ViewingCore::viewFront()
 {
-    computeInitialView();
+//    computeInitialView();
     _viewUp = osg::Vec3d(0., 0., 1.);
     _viewDir = osg::Vec3d(-1., 0., 0.);
 }
 
 void ViewingCore::viewBack()
 {
-    computeInitialView();
+//    computeInitialView();
     _viewUp = osg::Vec3d(0., 0., 1.);
     _viewDir = osg::Vec3d(1., 0., 0.);
 }

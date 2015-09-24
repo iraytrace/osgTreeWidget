@@ -99,7 +99,7 @@ private:
     bool m_mouseIsPressed;
     int m_timeToDrawLastFrame;
     osg::Vec2d m_savedEventNDCoords;
-    osg::ref_ptr<osgUtil::IntersectionVisitor> m_intersectionVisitor;
+
     void pickAnObjectFromView();
     QWidget *m_lastFocused;
 };
