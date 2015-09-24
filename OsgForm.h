@@ -43,6 +43,7 @@ private slots:
     void tweakCameraMaskBit(int state);
     void setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask);
     void announceMouseMode(Osg3dView::MouseMode mouseMode);
+    void updateCameraDisplay();
 private:
     void setupUserInterface();
     void buildLayerBox();

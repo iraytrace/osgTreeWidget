@@ -38,6 +38,9 @@ OsgForm::OsgForm(QWidget *parent) :
 
     connect(ui->osg3dView, SIGNAL(mouseModeChanged(Osg3dView::MouseMode)),
             this, SLOT(announceMouseMode(Osg3dView::MouseMode)));
+
+    connect(ui->osg3dView, SIGNAL(updated()),
+            this, SLOT(updateCameraDisplay()));
 }
 
 OsgForm::~OsgForm()
@@ -209,6 +212,24 @@ void OsgForm::setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask)
 void OsgForm::announceMouseMode(Osg3dView::MouseMode mouseMode)
 {
     emit showMessage( Osg3dView::mouseModeDescription(mouseMode) );
+}
+
+void OsgForm::updateCameraDisplay()
+{
+    osg::Vec3d eye = m_viewingCore->getEyePosition();
+    osg::Vec3d center =m_viewingCore->getViewCenter();
+
+    ui->eyeLineEdit->setText(QString("%1 %2 %3")
+                             .arg(eye.x())
+                             .arg(eye.y())
+                             .arg(eye.z())
+                             );
+    ui->centerLineEdit->setText(QString("%1 %2 %3")
+                             .arg(center.x())
+                             .arg(center.y())
+                             .arg(center.z())
+                             );
+
 }
 
 osg::ref_ptr<osg::Node> OsgForm::readNodes(const QString fileName)
