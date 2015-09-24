@@ -233,6 +233,23 @@ void OsgForm::addNode(osg::ref_ptr<osg::Node> n)
 #include <osgEarthDrivers/gdal/GDALOptions>
 using namespace osgEarth;
 using namespace osgEarth::Drivers;
+#define terrainFile "/home/butler/src/Qt/osgTreeWidget/cea.tif"
+#include <QPlainTextEdit>
+#include <GDAL_Wrapper.h>
+void OsgForm::grabGDAL(const QString fileName)
+{
+    QPlainTextEdit *pte = new QPlainTextEdit;
+    pte->setWindowTitle(fileName);
+    pte->show();
+
+    GDAL_Wrapper *gdw = new GDAL_Wrapper;
+    connect(gdw, SIGNAL(showMessage(QString)),
+            pte, SLOT(appendPlainText(QString)));
+
+    gdw->loadDTED(terrainFile);
+    delete gdw;
+}
+
 void OsgForm::doEarth(const QString fileName)
 {
     QString goodurl = fileName;
@@ -244,8 +261,8 @@ void OsgForm::doEarth(const QString fileName)
     }
 #if 1
     TMSOptions tms;
-    tms.url() = goodurl.toStdString().c_str();
-    ImageLayer *layer = new ImageLayer("CEA", tms);
+    tms.url() = terrainFile;
+    ImageLayer *layer = new ImageLayer("tms", tms);
     if (!layer) {
         QMessageBox::warning(this, "Could not make map tms layer", "Could not make map tms layer");
         return;
@@ -253,7 +270,7 @@ void OsgForm::doEarth(const QString fileName)
     map->addImageLayer(layer);
 #endif
     GDALOptions gdal;
-    gdal.url() = goodurl.toStdString().c_str();
+    gdal.url() = terrainFile;
     ElevationLayer *elevLayer = new ElevationLayer("CEAelev", gdal);
     if (!elevLayer) {
         QMessageBox::warning(this, "Could not make map elev layer", "Could not make map elev layer");
@@ -266,6 +283,8 @@ void OsgForm::doEarth(const QString fileName)
         QMessageBox::warning(this, "Could not make mapNode", "Could not make mapNode");
         return;
     }
+    if (mapNode)
+        addNode(mapNode);
 }
 #endif
 void OsgForm::openFile(const QString fileName)
@@ -277,6 +296,7 @@ void OsgForm::openFile(const QString fileName)
     }
 #if 1
     if (fileName.endsWith(".earth")) {
+        grabGDAL(fileName);
         doEarth(fileName);
         return;
     }

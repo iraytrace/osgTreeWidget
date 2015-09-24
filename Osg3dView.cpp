@@ -47,6 +47,12 @@ Osg3dView::Osg3dView(QWidget *parent)
 
     // this will probably be overwritten but avoids warnings
     setScene(new osg::Node);
+
+    connect(&m_refresh, SIGNAL(timeout()),
+            this, SLOT(update()));
+    m_refresh.start(250);
+
+
     update();
 }
 
@@ -58,7 +64,7 @@ void Osg3dView::setScene(osg::Node *root)
 
 void Osg3dView::paintGL()
 {
-    vDebug("paintGL");
+    qDebug("paintGL");
 
     // Update the camera
     osg::Camera *cam = this->getCamera();

@@ -8,7 +8,7 @@
 #include <osgViewer/Viewer>
 
 #include "ViewingCore.h"
-
+#include <QTimer>
 class OsgItemModel;
 
 class Osg3dView : public QOpenGLWidget, public osgViewer::Viewer
@@ -92,6 +92,7 @@ private:
     bool m_mouseIsPressed;
     int m_timeToDrawLastFrame;
     osg::Vec2d m_savedEventNDCoords;
+    QTimer m_refresh;
 };
 
 #endif // OSGVIEW_H

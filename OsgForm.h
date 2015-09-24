@@ -56,6 +56,7 @@ private:
     QCursor m_stashedCursor;
     QVector<QCheckBox *> m_checkBoxes;
     void doEarth(const QString fileName);
+    void grabGDAL(const QString fileName);
 };
 
 #endif // OSGFORM_H
