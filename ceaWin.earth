@@ -1,0 +1,8 @@
+<map name="CEA" type="geocentric" version="2">
+    <elevation name="cea" driver="gdal">
+        <url>C:/Users/Lee/Documents/src/Qt/osgTreeWidget/cea.tif</url>
+    </elevation>
+    <image name="cea" driver="gdal">
+        <url>C:/Users/Lee/Documents/src/Qt/osgTreeWidget/cea.tif</url>
+    </image>
+</map>
