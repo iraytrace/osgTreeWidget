@@ -229,7 +229,9 @@ void OsgForm::updateCameraDisplay()
                              .arg(center.y())
                              .arg(center.z())
                              );
-
+    double yaw, pitch, roll;
+    m_viewingCore->getYawPitchRoll(yaw, pitch, roll);
+    ui->azElLineEdit->setText(QString("%1 %2 %3").arg(yaw).arg(pitch).arg(roll));
 }
 
 osg::ref_ptr<osg::Node> OsgForm::readNodes(const QString fileName)
