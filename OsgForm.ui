@@ -71,6 +71,9 @@
            <height>128</height>
           </size>
          </property>
+         <property name="focusPolicy">
+          <enum>Qt::WheelFocus</enum>
+         </property>
         </widget>
        </item>
        <item>

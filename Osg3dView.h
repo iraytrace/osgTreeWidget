@@ -25,7 +25,7 @@ public:
         MM_ZOOM = (1<<3),
         MM_ROTATE = (1<<4),
         MM_PICK_CENTER = (1<<5),
-        MM_LINE_SEGMENT = (1<<6)
+        MM_SELECT = (1<<6)
     };
     enum StandardView {
         V_TOP = (1<<0),
@@ -46,6 +46,7 @@ public:
 
     osg::ref_ptr<ViewingCore> getViewingCore() const { return m_viewingCore; }
 
+    static QString mouseModeDescription(Osg3dView::MouseMode mouseMode);
 public slots:
     void paintGL();
     void resizeGL(int w, int h);
@@ -57,6 +58,9 @@ public slots:
     void setDrawMode();
     void setProjection();
 
+    void enterEvent(QEvent *event);
+    void leaveEvent(QEvent * event);
+    void keyPressEvent(QKeyEvent *event);
     void mousePressEvent( QMouseEvent* event );
     void mouseReleaseEvent(QMouseEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
@@ -96,6 +100,8 @@ private:
     int m_timeToDrawLastFrame;
     osg::Vec2d m_savedEventNDCoords;
     osg::ref_ptr<osgUtil::IntersectionVisitor> m_intersectionVisitor;
+    void pickAnObjectFromView();
+    QWidget *m_lastFocused;
 };
 
 #endif // OSGVIEW_H

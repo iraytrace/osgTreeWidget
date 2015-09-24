@@ -35,6 +35,9 @@ OsgForm::OsgForm(QWidget *parent) :
 
     connect(ui->osg3dView, SIGNAL(pickObject(QVector<osg::ref_ptr<osg::Node> >)),
             this, SLOT(handlePick(QVector<osg::ref_ptr<osg::Node> >)));
+
+    connect(ui->osg3dView, SIGNAL(mouseModeChanged(Osg3dView::MouseMode)),
+            this, SLOT(announceMouseMode(Osg3dView::MouseMode)));
 }
 
 OsgForm::~OsgForm()
@@ -201,6 +204,11 @@ void OsgForm::setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask)
 {
     n->setNodeMask(mask);
     ui->osg3dView->update();
+}
+
+void OsgForm::announceMouseMode(Osg3dView::MouseMode mouseMode)
+{
+    emit showMessage( Osg3dView::mouseModeDescription(mouseMode) );
 }
 
 osg::ref_ptr<osg::Node> OsgForm::readNodes(const QString fileName)

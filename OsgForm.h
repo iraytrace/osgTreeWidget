@@ -5,11 +5,14 @@
 #include <QFutureWatcher>
 #include <osg/Group>
 #include "ViewingCore.h"
+#include "Osg3dView.h"
 
 class QTableWidgetItem;
 class QTreeWidgetItem;
 class QCheckBox;
 class QPushButton;
+
+
 namespace Ui {
 class OsgForm;
 }
@@ -39,7 +42,7 @@ private slots:
     void readNodesFinished();
     void tweakCameraMaskBit(int state);
     void setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask);
-
+    void announceMouseMode(Osg3dView::MouseMode mouseMode);
 private:
     void setupUserInterface();
     void buildLayerBox();
