@@ -26,11 +26,15 @@ OsgForm::OsgForm(QWidget *parent) :
 {
     ui->setupUi(this);
     setupUserInterface();
-
+    m_root->setName("root");
+    m_loadedModel->setName("loadedModel");
     m_root->addChild(m_loadedModel);
 
     ui->osg3dView->setScene(m_root);
     m_viewingCore = ui->osg3dView->getViewingCore();
+
+    connect(ui->osg3dView, SIGNAL(pickObject(QVector<osg::ref_ptr<osg::Node> >)),
+            this, SLOT(handlePick(QVector<osg::ref_ptr<osg::Node> >)));
 }
 
 OsgForm::~OsgForm()
@@ -158,8 +162,7 @@ void OsgForm::itemWasChangedInTree(QTreeWidgetItem *treewi, int col)
             bool ok = false;
             unsigned mask = treewi->text(col).toUInt(&ok, 16);
             if (ok) {
-                n->setNodeMask(mask);
-                ui->osg3dView->update();
+                setNodeMask(n, mask);
             }
         }
     }
@@ -179,10 +182,25 @@ void OsgForm::setCameraMaskFromLineEdit()
     }
 }
 
+void OsgForm::handlePick(QVector<osg::ref_ptr<osg::Node> > nodePath)
+{
+    QTreeWidgetItem *root = ui->osgTreeWidget->invisibleRootItem();
+
+    for (int i=2 ; i < nodePath.size() ; i++) {
+        root = ui->osgTreeWidget->childThatMatches(root, nodePath.at(i));
+        if (!root)
+            return;
+    }
+
+    ui->osgTreeWidget->scrollToItem(root);
+    ui->osgTreeWidget->setCurrentItem(root);
+}
+
 
 void OsgForm::setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask)
 {
-
+    n->setNodeMask(mask);
+    ui->osg3dView->update();
 }
 
 osg::ref_ptr<osg::Node> OsgForm::readNodes(const QString fileName)

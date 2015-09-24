@@ -6,6 +6,7 @@
 #include <QMenu>
 
 #include <osgViewer/Viewer>
+#include <osgUtil/IntersectionVisitor>
 
 #include "ViewingCore.h"
 
@@ -23,7 +24,8 @@ public:
         MM_PAN = (1<<2),
         MM_ZOOM = (1<<3),
         MM_ROTATE = (1<<4),
-        MM_PICK_CENTER = (1<<5)
+        MM_PICK_CENTER = (1<<5),
+        MM_LINE_SEGMENT = (1<<6)
     };
     enum StandardView {
         V_TOP = (1<<0),
@@ -65,6 +67,7 @@ signals:
     /// Let the rest of the world (OsgView) know the current MouseMode
     void mouseModeChanged(Osg3dView::MouseMode);
     void updated();
+    void pickObject(QVector< osg::ref_ptr<osg::Node> > nodePath);
 
 private:
     osg::Vec2d getNormalized(const int ix, const int iy);
@@ -92,6 +95,7 @@ private:
     bool m_mouseIsPressed;
     int m_timeToDrawLastFrame;
     osg::Vec2d m_savedEventNDCoords;
+    osg::ref_ptr<osgUtil::IntersectionVisitor> m_intersectionVisitor;
 };
 
 #endif // OSGVIEW_H

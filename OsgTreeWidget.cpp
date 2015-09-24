@@ -109,6 +109,48 @@ void OsgTreeWidget::addObject(osg::Object *object)
     this->setCursor(Qt::WaitCursor);
 }
 
+bool OsgTreeWidget::itemMatchesObject(QTreeWidgetItem *i, osg::ref_ptr<osg::Object> obj)
+{
+    if (!i ||!obj.valid()) return false;
+
+    QVariant v = i->data(0, Qt::UserRole);
+    if (v.isNull() || !v.isValid()) return false;
+
+    osg::Object *object = VariantPtr<osg::Object>::asPtr(v);
+    if (!object) return false;
+
+    return (object == obj.get());
+}
+
+void OsgTreeWidget::lookForMatch(std::vector<QTreeWidgetItem *> &matchingItems,
+                                 osg::ref_ptr<osg::Object> obj,
+                                 QTreeWidgetItem *item)
+{
+    if (item) {
+        if (itemMatchesObject(item, obj)) {
+            matchingItems.push_back(item);
+            return;
+        }
+    } else {
+        item = invisibleRootItem();
+        matchingItems.clear();
+    }
+
+    for (int i=0 ; i < item->childCount() ; i++) {
+        lookForMatch(matchingItems, obj, item->child(i));
+    }
+}
+
+QTreeWidgetItem *OsgTreeWidget::childThatMatches(QTreeWidgetItem *top,
+                                                 osg::ref_ptr<osg::Object> obj)
+{
+    for (int i=0 ; i < top->childCount() ; i++) {
+        if (itemMatchesObject(top->child(i), obj))
+            return top->child(i);
+    }
+    return (QTreeWidgetItem *)0;
+}
+
 void OsgTreeWidget::resizeAllColumns()
 {
     twDebug("resizeColumns %d", columnCount());
@@ -121,6 +163,8 @@ void OsgTreeWidget::resizeAllColumns()
 void OsgTreeWidget::currentItemWasChanged(QTreeWidgetItem *current,
                                           QTreeWidgetItem *)
 {
+    if (!current)
+        return;
     QVariant v = current->data(0, Qt::UserRole);
     osg::ref_ptr<osg::Object> object = VariantPtr<osg::Object>::asPtr(v);
 

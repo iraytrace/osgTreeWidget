@@ -8,6 +8,7 @@
 #include <osg/Node>
 #include <osg/Matrixd>
 #include <cmath>
+#include <QImage>
 
 //#include <QTextStream> // this should get replaced by a C++11
 #include <iostream>
@@ -94,6 +95,11 @@ public:
     ViewingCoreMode getViewingCoreMode() const {
         return( _mode );
     }
+
+
+    osg::Vec3d getFarPoint(const double ndcX, const double ndcY);
+    bool getStartPoint(osg::Vec3d &startPoint, const osg::Vec3d farPoint, const double ndcX, const double ndcY);
+    bool lineSegmentIntersect( const double ndcX, const double ndcY );
 
     /** Select a new view center. This function back-transforms the input NDC xy values
     into world space and uses them to create a LineSegmentIntersector to pick a new
@@ -246,6 +252,8 @@ protected:
     bool _clampFovyScale;
     osg::Vec2d _clampFovyRange;
     double _orthoBottom, _orthoTop;
+
+    QImage m_texture;
 };
 
 

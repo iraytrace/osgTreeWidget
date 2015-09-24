@@ -8,6 +8,8 @@
 #include <osg/ValueObject>
 #include <osg/StateSet>
 #include <osg/PolygonMode>
+#include <osgUtil/IntersectionVisitor>
+#include <osgUtil/LineSegmentIntersector>
 
 
 static const bool debugView = false;
@@ -141,6 +143,49 @@ void Osg3dView::mousePressEvent(QMouseEvent *event)
         else if (m_mouseMode & MM_PICK_CENTER) {
             m_viewingCore->pickCenter(m_savedEventNDCoords.x(),
                                       m_savedEventNDCoords.y() );
+            update();
+        } else if (m_mouseMode & MM_LINE_SEGMENT) {
+            osg::Vec3d startPoint;
+            osg::Vec3d farPoint =
+                    m_viewingCore->getFarPoint(m_savedEventNDCoords.x(),
+                                               m_savedEventNDCoords.y());
+            m_viewingCore->getStartPoint(startPoint, farPoint,
+                                         m_savedEventNDCoords.x(),
+                                         m_savedEventNDCoords.y());
+            osgUtil::LineSegmentIntersector* intersector =
+                    new osgUtil::LineSegmentIntersector( startPoint, farPoint );
+            // m_intersectionVisitor assumes owndership of intersector via
+            // an internal ref_ptr inside setIntersector();
+            m_intersectionVisitor = new osgUtil::IntersectionVisitor( intersector, NULL );
+            this->getSceneData()->accept( *m_intersectionVisitor );
+
+            if (intersector->containsIntersections()) {
+                osgUtil::LineSegmentIntersector::Intersections & intersections =
+                        intersector->getIntersections();
+#if 0
+                for (osgUtil::LineSegmentIntersector::Intersections::iterator itr =
+                     intersections.begin();
+                     itr != intersections.end() ;
+                     ++itr) {
+
+                }
+#else
+                osgUtil::LineSegmentIntersector::Intersections::iterator itr =
+                                     intersections.begin();
+                const osgUtil::LineSegmentIntersector::Intersection &oneIntersection =
+                        *itr;
+                QVector< osg::ref_ptr<osg::Node> > myNodePath;
+                // turn pointers into ref_ptrs
+                osg::NodePath np = oneIntersection.nodePath;
+                for (int i=0 ; i < np.size() ; i++) {
+                    osg::ref_ptr<osg::Node> saveMe(np.at(i));
+                    qDebug("pushing(%s)", saveMe->getName().c_str());
+                    myNodePath.push_back(saveMe);
+                }
+
+                emit pickObject(myNodePath);
+#endif
+            }
         }
 
         m_mouseIsPressed = true;
@@ -218,6 +263,8 @@ void Osg3dView::buildPopupMenu()
     a->setData(QVariant(MM_ZOOM));
     a = sub->addAction("Pick Center", this, SLOT(setMouseMode()));
     a->setData(QVariant(MM_PICK_CENTER));
+    a = sub->addAction("Pick Object", this, SLOT(setMouseMode()));
+    a->setData(QVariant(MM_LINE_SEGMENT));
 
     sub = m_popupMenu.addMenu("Std View...");
     a = sub->addAction("Top", this, SLOT(setStandardView()));

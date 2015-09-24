@@ -9,10 +9,12 @@
 #include <osgUtil/IntersectionVisitor>
 #include <osgUtil/LineSegmentIntersector>
 #include <osg/Plane>
+#include <osg/Texture>
 
 #include <osg/io_utils>
 #include <iostream>
 #include <stdio.h>
+#include <QRgb>
 
 
 ViewingCore::ViewingCore()
@@ -386,6 +388,187 @@ void ViewingCore::setViewingCoreMode( ViewingCoreMode mode )
     _mode = mode;
 }
 
+
+osg::Vec3d ViewingCore::getFarPoint(const double ndcX, const double ndcY)
+{
+    osg::Matrixd p = computeProjection();
+
+    osg::Vec4d ccFarPoint( ndcX, ndcY, 1., 1. );
+    if( !getOrtho() ) {
+        // Not ortho, so w != 1.0. Multiply by the far plane distance.
+        // This yields a value in clip coords.
+        double fovy, aspect, zNear, zFar;
+        p.getPerspective( fovy, aspect, zNear, zFar );
+        ccFarPoint *= zFar;
+    }
+
+    // Get inverse view & proj matrices to back-transform the clip coord point.
+    osg::Matrixd v = getMatrix();
+    p.invert( p );
+
+    osg::Vec4d wc = ccFarPoint * p * v;
+    osg::Vec3d farPoint( wc.x(), wc.y(), wc.z() );
+    return farPoint;
+}
+
+bool ViewingCore::getStartPoint(osg::Vec3d & startPoint, const osg::Vec3d farPoint, const double ndcX, const double ndcY)
+{
+    if( !( _scene.valid() ) ) {
+        osg::notify( osg::WARN ) << "ViewingCore::intersect: _scene == NULL." << std::endl;
+        return( false );
+    }
+
+    const osg::BoundingSphere& bs = _scene->getBound();
+    const double distance = _viewDistance + bs._radius;
+
+    startPoint = getOrtho() ? farPoint - ( _viewDir * distance * 2. ) : getEyePosition();
+    return true;
+}
+
+// This arguably should simply be getFarPoint and getStartPoint which then a higher-level
+// object takes and does the lineSegmentIntersect
+bool ViewingCore::lineSegmentIntersect( const double ndcX, const double ndcY )
+{
+    osg::Vec3d farPoint = getFarPoint(ndcX, ndcY);
+    osg::Vec3d startPoint;
+    static float *m_orcaXYZ = (float *)NULL;
+    static int orcaWidth, orcaHeight;
+
+    static QImage hi;
+    static QImage mid;
+    static QImage low;
+    // minimum point of AABB of geometry
+    static osg::Vec3d minPt(-4.73140257, -7.43439854, 0.);
+
+    // dimension of AABB of geometry relative to minPt (dimensions of AABB)
+    // eg: maxPt - minPt
+    static osg::Vec3d extent(543.49248045, 262.80339854, 1762.28720383);
+
+    if ( ! m_orcaXYZ ) {
+
+
+        hi.load("/home/butler/Desktop/ORCA_guy/hi_order_pos_plywood.png");
+        mid.load("/home/butler/Desktop/ORCA_guy/mid_order_pos_plywood.png");
+        low.load("/home/butler/Desktop/ORCA_guy/low_order_pos_plywood.png");
+
+        m_orcaXYZ = (float *)malloc(sizeof(float)* hi.width() * hi.height() * 3);
+
+
+        orcaWidth = hi.width();
+        orcaHeight = hi.height();
+        std::cout << "w,h: " << orcaWidth << " " << orcaHeight << std::endl;
+
+        for (int x=0 ; x < orcaWidth ; x++) {
+            for (int y=0 ; y < orcaHeight ; y++) {
+                QRgb h_rgb = hi.pixel(x, y);
+                QRgb m_rgb = mid.pixel(x, y);
+                QRgb l_rgb = low.pixel(x, y);
+
+                // combine the 3 char values
+                unsigned int xval = (qRed(h_rgb) << 16) | (qRed(m_rgb) << 8) | qRed(l_rgb);
+                unsigned int yval = (qGreen(h_rgb) << 16) | (qGreen(m_rgb) << 8) | qGreen(l_rgb);
+                unsigned int zval = (qBlue(h_rgb) << 16) | (qBlue(m_rgb) << 8) | qBlue(l_rgb);
+
+                m_orcaXYZ[ (x * 3)+ (y*orcaWidth * 3) ] = minPt.x() + xval * extent.x() / (1<<24) ;
+                m_orcaXYZ[ (x * 3)+ (y*orcaWidth * 3) + 1 ] = minPt.y() + yval * extent.y() / (1<<24) ;
+                m_orcaXYZ[ (x * 3)+ (y*orcaWidth * 3) + 2 ] = minPt.z() + zval * extent.z() / (1<<24) ;
+            }
+        }
+    }
+
+
+    if (getStartPoint(startPoint, farPoint, ndcX, ndcY)) {
+
+        std::cout << farPoint << std::endl;
+        std::cout << startPoint << std::endl;
+
+        osgUtil::LineSegmentIntersector* intersector = new osgUtil::LineSegmentIntersector(
+                    startPoint, farPoint );
+        osgUtil::IntersectionVisitor intersectVisitor( intersector, NULL );
+        _scene->accept( intersectVisitor );
+
+
+
+        osgUtil::LineSegmentIntersector::Intersections& intersections = intersector->getIntersections();
+
+
+        if ( intersector->containsIntersections() ) {
+            std::cout << "Intersections:\n";
+            osgUtil::LineSegmentIntersector::Intersections& intersections = intersector->getIntersections();
+
+            int hitNumber = 0;
+            for(osgUtil::LineSegmentIntersector::Intersections::iterator itr = intersections.begin();
+                itr != intersections.end();
+                ++itr) {
+
+                if (hitNumber == 0 || hitNumber == 3) {
+                const osgUtil::LineSegmentIntersector::Intersection& intersection = *itr;
+                std::cout<<"  ratio "<<intersection.ratio<<std::endl;
+                std::cout<<"  point "<<intersection.localIntersectionPoint<<std::endl;
+                std::cout<<"  normal "<<intersection.localIntersectionNormal<<std::endl;
+                std::cout<<"  indices "<<intersection.indexList.size()<<std::endl;
+                std::cout<<"  primitiveIndex "<<intersection.primitiveIndex<<std::endl;
+
+                osg::Vec3 texCoords;
+                osg::Texture *tex = intersection.getTextureLookUp(texCoords);
+                std::cout<<"  tc " << texCoords << std::endl;
+
+                int x = orcaWidth * texCoords.x();
+                int y = orcaHeight * (1.0 - texCoords.y());
+
+                std::cout << "x,y: " << x << " " << y << std::endl;
+
+
+                QRgb h_rgb = hi.pixel(x, y);
+                QRgb m_rgb = mid.pixel(x, y);
+                QRgb l_rgb = low.pixel(x, y);
+
+                std::cout << "X " << qRed(h_rgb) << " " << qRed(m_rgb) << " " << qRed(l_rgb) << std::endl;
+                std::cout << "Y " << qGreen(h_rgb) << " " << qGreen(m_rgb) << " " << qGreen(l_rgb) << std::endl;
+                std::cout << "Z " << qBlue(h_rgb) << " " << qBlue(m_rgb) << " " << qBlue(l_rgb) << std::endl;
+
+
+                // combine the 3 char values
+                unsigned int xval = (qRed(h_rgb) << 16) | (qRed(m_rgb) << 8) | qRed(l_rgb);
+                unsigned int yval = (qGreen(h_rgb) << 16) | (qGreen(m_rgb) << 8) | qGreen(l_rgb);
+                unsigned int zval = (qBlue(h_rgb) << 16) | (qBlue(m_rgb) << 8) | qBlue(l_rgb);
+
+
+                std::cout << "Xyz: " << xval << " " << yval << " " << zval << std::endl;
+
+                std::cout << "minPt " << minPt.x() << " " << minPt.y() << " " << minPt.z() << std::endl;
+                std::cout << "extent " << extent.x() << " " << extent.y() << " " << extent.z() << std::endl;
+
+                std::cout << "scaled: " << xval * 1.0 / (1<<24) << " " << yval * 1.0 / (1<<24) << " " << zval * 1.0 / (1<<24) <<  std::endl;
+
+                std::cout << "ORCA coords:" << std::endl;
+                std::cout << "x... " << minPt.x() + xval * extent.x() / (1<<24) << std::endl;
+                std::cout << "y... " << minPt.y() + yval * extent.y() / (1<<24) << std::endl;
+                std::cout << "z... " << minPt.z() + zval * extent.z() / (1<<24) << std::endl;
+#if 0
+                m_orcaXYZ[ (x * 3)+ (y*orcaWidth * 3) ] = minPt.x() + xval * extent.x() / (1<<24) ;
+                m_orcaXYZ[ (x * 3)+ (y*orcaWidth * 3) + 1 ] = minPt.y() + yval * extent.y() / (1<<24) ;
+                m_orcaXYZ[ (x * 3)+ (y*orcaWidth * 3) + 2 ] = minPt.z() + zval * extent.z() / (1<<24) ;
+
+
+
+                std::cout << "xzy: " << m_orcaXYZ[(x * 3)+ (y*orcaWidth * 3)]
+                              << " " << m_orcaXYZ[(x * 3)+ (y*orcaWidth * 3) +1 ]
+                              << " " << m_orcaXYZ[(x * 3)+ (y*orcaWidth * 3) +2 ] << std::endl;
+#endif
+                std::cout<<std::endl;
+                }
+                hitNumber++;
+            }
+        } else {
+            std::cout << "No intersections" << std::endl;
+            return( false );
+        }
+
+        return( true );
+    }
+    return( false );
+}
 void ViewingCore::pickCenter( const double ndcX, const double ndcY )
 {
     // Preserve the view direction.

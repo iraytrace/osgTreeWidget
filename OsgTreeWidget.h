@@ -12,6 +12,14 @@ public:
     OsgTreeWidget(QWidget * parent = 0);
 
     void addObject(osg::Object *object);
+    bool itemMatchesObject(QTreeWidgetItem *i,
+                           osg::ref_ptr<osg::Object> obj);
+    void lookForMatch(std::vector<QTreeWidgetItem *> &matchingItems,
+                      osg::ref_ptr<osg::Object> obj,
+                        QTreeWidgetItem *item = 0);
+
+    QTreeWidgetItem *childThatMatches(QTreeWidgetItem *top,
+            osg::ref_ptr<osg::Object> obj);
 
 signals:
     void currentObject(osg::ref_ptr<osg::Object> object);

@@ -33,6 +33,7 @@ public slots:
     void itemWasChangedInTable(QTableWidgetItem *tabwi);
     void itemWasChangedInTree(QTreeWidgetItem *treewi, int col);
     void setCameraMaskFromLineEdit();
+    void handlePick(QVector<osg::ref_ptr<osg::Node> > nodePath);
 private slots:
     void wrieNodesFinished();
     void readNodesFinished();

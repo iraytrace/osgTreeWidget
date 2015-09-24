@@ -51,6 +51,7 @@ void OsgPropertyTable::hideAllRows()
 
 void OsgPropertyTable::itemWasClicked(QTableWidgetItem *item)
 {
+    if (!item) return;
     if ( ! (item->flags() & Qt::ItemIsUserCheckable) )
         return;
 
@@ -124,6 +125,7 @@ QTableWidgetItem * OsgPropertyTable::itemForKey(const QString key)
 
 void OsgPropertyTable::setTableValuesForObject(osg::ref_ptr<osg::Object> object)
 {
+    if (!object.valid()) return;
     setTextForKey("Name", QString::fromStdString( object->getName() ));
 
     osg::Object::DataVariance dataVariance = object->getDataVariance();
