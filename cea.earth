@@ -1,4 +1,7 @@
 <map name="CEA" type="geocentric" version="2">
+    <elevation name="cea" driver="gdal">
+        <url>cea.tif</url>
+    </elevation>
     <image name="cea" driver="gdal">
         <url>cea.tif</url>
     </image>

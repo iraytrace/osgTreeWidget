@@ -21,7 +21,7 @@ class OsgForm : public QWidget
 public:
     explicit OsgForm(QWidget *parent = 0);
     ~OsgForm();
-
+    static const QString getFileExtensions();
 signals:
     void showMessage(QString);
 public slots:
@@ -55,6 +55,7 @@ private:
     QFutureWatcher< bool >m_saveWatcher;
     QCursor m_stashedCursor;
     QVector<QCheckBox *> m_checkBoxes;
+    void doEarth(const QString fileName);
 };
 
 #endif // OSGFORM_H

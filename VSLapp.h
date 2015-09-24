@@ -15,6 +15,7 @@ public:
     static void showAboutDialog(QWidget *parent);
     static void mainWindowSetup(QMainWindow *mw);
     static void mainWindowSave(QMainWindow *mw);
+
 private:
     VSLapp() {}
     static void logApplicationLaunch(QFileInfo appFile);

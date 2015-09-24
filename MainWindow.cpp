@@ -29,9 +29,16 @@ MainWindow::~MainWindow()
 void MainWindow::on_actionFileOpen_triggered()
 {
     QSettings settings;
-    loadFile(QFileDialog::getOpenFileName(this, "Select File",
-                                          settings.value("currentDirectory").toString(),
-                                          "All Files (*.*)"));
+    QString fileFilters = OsgForm::getFileExtensions();
+    fileFilters.append(";;AllFiles(*.*)");
+    QString selectedFilter;
+    QString fileName = QFileDialog::getOpenFileName(this, "Select File",
+                                                    settings.value("currentDirectory").toString(),
+                                                    fileFilters,
+                                                    &selectedFilter
+                                                    );
+    qDebug("selected Fitler >%s<", qPrintable(selectedFilter));
+    loadFile(fileName);
 }
 
 void MainWindow::on_actionFileSave_triggered()

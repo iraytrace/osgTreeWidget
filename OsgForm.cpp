@@ -36,6 +36,11 @@ OsgForm::~OsgForm()
     delete ui;
 }
 
+const QString OsgForm::getFileExtensions()
+{
+    return QString("OpenSceneGraph (*.osg *.ive *.obj *.osgt *.osgx *.osgb *.stl);;OsgEarth (*.earth)");
+}
+
 void OsgForm::buildLayerBox()
 {
     QGridLayout *grid = new QGridLayout(ui->layerFrame);
@@ -173,6 +178,7 @@ void OsgForm::setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask)
 osg::ref_ptr<osg::Node> OsgForm::readNodes(const QString fileName)
 {
     osg::ref_ptr<osg::Node> loaded = osgDB::readNodeFile(fileName.toStdString());
+
     return loaded;
 }
 void OsgForm::setProgressBarState(bool turnOn)
@@ -202,8 +208,6 @@ void OsgForm::readNodesFinished()
                              .arg(loadedFileName));
         setProgressBarState(false);
         return;
-    } else {
-        qDebug("loaded Node of type %s", loaded->className());
     }
     addNode(loaded);
 }
@@ -222,7 +226,48 @@ void OsgForm::addNode(osg::ref_ptr<osg::Node> n)
     ui->osg3dView->setCursor(m_stashedCursor);
 
 }
+#if 1
+#include <osgEarth/Map>
+#include <osgEarth/MapNode>
+#include <osgEarthDrivers/tms/TMSOptions>
+#include <osgEarthDrivers/gdal/GDALOptions>
+using namespace osgEarth;
+using namespace osgEarth::Drivers;
+void OsgForm::doEarth(const QString fileName)
+{
+    QString goodurl = fileName;
+    goodurl.replace(QString("\\"), QString("/"));
+    Map * map = new Map();
+    if (!map) {
+        QMessageBox::warning(this, "Could not make map", "Could not make map");
+        return;
+    }
+#if 1
+    TMSOptions tms;
+    tms.url() = goodurl.toStdString().c_str();
+    ImageLayer *layer = new ImageLayer("CEA", tms);
+    if (!layer) {
+        QMessageBox::warning(this, "Could not make map tms layer", "Could not make map tms layer");
+        return;
+    }
+    map->addImageLayer(layer);
+#endif
+    GDALOptions gdal;
+    gdal.url() = goodurl.toStdString().c_str();
+    ElevationLayer *elevLayer = new ElevationLayer("CEAelev", gdal);
+    if (!elevLayer) {
+        QMessageBox::warning(this, "Could not make map elev layer", "Could not make map elev layer");
+        return;
+    }
+    map->addElevationLayer(elevLayer);
 
+    MapNode *mapNode = new MapNode(map);
+    if (!mapNode) {
+        QMessageBox::warning(this, "Could not make mapNode", "Could not make mapNode");
+        return;
+    }
+}
+#endif
 void OsgForm::openFile(const QString fileName)
 {
     if (m_loadWatcher.isRunning() || m_saveWatcher.isRunning()) {
@@ -230,7 +275,12 @@ void OsgForm::openFile(const QString fileName)
                              "Please wait until the previous load/save is done");
         return;
     }
-
+#if 1
+    if (fileName.endsWith(".earth")) {
+        doEarth(fileName);
+        return;
+    }
+#endif
     m_loadWatcher.setProperty("filename", fileName);
     emit showMessage(QString("loading %1").arg(fileName));
     // Start the file load.
@@ -240,6 +290,7 @@ void OsgForm::openFile(const QString fileName)
     m_loadWatcher.setFuture(future);
 
     setProgressBarState(true);
+
 }
 bool OsgForm::saveThread(osg::ref_ptr<osg::Node> node,
                          const QString fileName)
