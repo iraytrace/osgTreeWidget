@@ -1,0 +1,5 @@
+<map name="CEA" type="geocentric" version="2">
+    <image name="cea" driver="gdal">
+        <url>cea.tif</url>
+    </image>
+</map>

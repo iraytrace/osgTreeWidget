@@ -7,6 +7,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
   "${CMAKE_SOURCE_DIR}/misc/CMake/compiler"
 )
 
+
+
 include(findAndInstallDependencies)
 include(setBuildMachineUser) #create definitions for whence the executable was built
 include(compiler_setup)
@@ -24,6 +26,16 @@ set(OSG_DIR "$ENV{USERPROFILE}/sw")
 endif (WIN32)
 find_package(OpenSceneGraph 3.0.1 COMPONENTS osg osgDB osgViewer osgGA osgUtil OpenThreads )
 include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
+
+
+file(TO_CMAKE_PATH "$ENV{USERPROFILE}" OSGEARTH_ROOT)
+set(OSGEARTH_DIR ${OSGEARTH_ROOT}/sw)
+find_package(OsgEarth REQUIRED)
+message(STATUS "osgEarth inc >${OSGEARTH_INCLUDE_DIR}<")
+message(STATUS "osgEarth lib >${OSGEARTH_LIBRARY}<")
+include_directories(${OSGEARTH_INCLUDE_DIR})
+#message(STATUS "osgEarth >${OSGEARTH_LIBRARY}<")
+
 
 #set(ENV{GDAL_DIR} "$ENV{USERPROFILE}/sw")
 #find_package(GDAL REQUIRED)
@@ -71,6 +83,7 @@ target_link_LIBRARIES(osgTreeWidget
     Qt5::Widgets
     Qt5::OpenGL
    ${OPENSCENEGRAPH_LIBRARIES}
+${OSGEARTH_LIBRARY}
 #${GDAL_LIBRARY}
   )
 set_target_properties(osgTreeWidget
