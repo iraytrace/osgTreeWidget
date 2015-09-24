@@ -419,7 +419,6 @@ void Osg3dView::setProjection()
 #include <QApplication>
 void Osg3dView::enterEvent(QEvent *event)
 {
-    qDebug("enter");
     QWidget *w = qApp->focusWidget();
     this->setFocus();
     if ( w && w != this) {
@@ -431,14 +430,12 @@ void Osg3dView::enterEvent(QEvent *event)
 
 void Osg3dView::leaveEvent(QEvent *event)
 {
-    qDebug("leave");
     this->clearFocus();
 
     if (m_lastFocused && m_lastFocused != this) {
         m_lastFocused->setFocus();
         m_lastFocused = (QWidget *)0;
     }
-
 }
 
 void Osg3dView::keyPressEvent(QKeyEvent *event)
