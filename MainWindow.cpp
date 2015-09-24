@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent) :
     VSLapp::mainWindowSetup(this);
     connect(ui->osgForm, SIGNAL(showMessage(QString)),
             ui->statusBar, SLOT(showMessage(QString)));
+    connect(ui->actionClose, SIGNAL(triggered(bool)),
+            ui->osgForm, SLOT(removeAllNodes()));
 }
 
 MainWindow::~MainWindow()
@@ -29,9 +31,11 @@ MainWindow::~MainWindow()
 void MainWindow::on_actionFileOpen_triggered()
 {
     QSettings settings;
+
+    QString FileTypes = QString("%1;;All Files (*.*)").arg(OsgForm::getFileExtensions());
     loadFile(QFileDialog::getOpenFileName(this, "Select File",
                                           settings.value("currentDirectory").toString(),
-                                          "All Files (*.*)"));
+                                          FileTypes));
 }
 
 void MainWindow::on_actionFileSave_triggered()

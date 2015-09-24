@@ -21,11 +21,13 @@
 OsgForm::OsgForm(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::OsgForm),
-    m_root(new osg::Group)
+    m_root(new osg::Group),
+    m_loadedModel(new osg::Group)
 {
     ui->setupUi(this);
     setupUserInterface();
 
+    m_root->addChild(m_loadedModel);
 
     ui->osg3dView->setScene(m_root);
     m_viewingCore = ui->osg3dView->getViewingCore();
@@ -34,6 +36,19 @@ OsgForm::OsgForm(QWidget *parent) :
 OsgForm::~OsgForm()
 {
     delete ui;
+}
+
+QString OsgForm::getFileExtensions()
+{
+    return QString("OpenSceneGraph (*.osg *.ive *.osgb *.osgt *.osgx *.obj *.lwo *.stl *.dxf *.bsp *.3ds *.3dc)");
+}
+
+void OsgForm::removeAllNodes()
+{
+    m_loadedModel->removeChildren(0, m_loadedModel->getNumChildren());
+    ui->osg3dView->update();
+    ui->osgTreeWidget->clear();
+    ui->osgPropertyTable->clear();
 }
 
 void OsgForm::buildLayerBox()
@@ -214,8 +229,8 @@ void OsgForm::addNode(osg::ref_ptr<osg::Node> n)
     setProgressBarState(true);
     ui->osgTreeWidget->addObject(n);
 
-    m_root->addChild(n);
-    if (m_root->getNumChildren() == 1) {
+    m_loadedModel->addChild(n);
+    if (m_loadedModel->getNumChildren() == 1) {
         m_viewingCore->fitToScreen();
     }
     setProgressBarState(false); // triggers an update()
@@ -273,10 +288,10 @@ bool OsgForm::saveFile(const QString fileName)
     emit showMessage(QString("saving %1").arg(fileName));
 
     osg::ref_ptr<osg::Node> n;
-    if (m_root->getNumChildren() == 1)
-        n = m_root->getChild(0);
+    if (m_loadedModel->getNumChildren() == 1)
+        n = m_loadedModel->getChild(0);
     else
-        n = m_root;
+        n = m_loadedModel;
 
     QFuture< bool > future =
             QtConcurrent::run(this, &OsgForm::saveThread, n, fileName);

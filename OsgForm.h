@@ -21,10 +21,11 @@ class OsgForm : public QWidget
 public:
     explicit OsgForm(QWidget *parent = 0);
     ~OsgForm();
-
+    static QString getFileExtensions();
 signals:
     void showMessage(QString);
 public slots:
+    void removeAllNodes();
     void openFile(const QString fileName);
     bool saveFile(const QString fileName);
     void addNode(osg::ref_ptr<osg::Node> n);
@@ -49,6 +50,7 @@ private:
     Ui::OsgForm *ui;
 
     osg::ref_ptr<osg::Group> m_root;
+    osg::ref_ptr<osg::Group> m_loadedModel;
     osg::ref_ptr<ViewingCore> m_viewingCore;
 
     QFutureWatcher< osg::ref_ptr<osg::Node> >m_loadWatcher;
