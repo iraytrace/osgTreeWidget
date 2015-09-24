@@ -69,6 +69,15 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->accept();
     }
 }
+
+void MainWindow::doGdalLoad(QString fileName)
+{
+    GDAL_Wrapper *gdal = new GDAL_Wrapper();
+
+    std::vector<float> buffer = gdal->loadTerrain(fileName);
+
+}
+
 void MainWindow::loadFile(QString filename)
 {
     if (filename.isEmpty())
@@ -84,6 +93,9 @@ void MainWindow::loadFile(QString filename)
     settings.setValue("currentDirectory", fi.absolutePath());
     m_recentFiles.setMostRecentFile(filename);
 
+    if (filename.endsWith(".tif"))
+        doGdalLoad(fileName);
+    else
         ui->osgForm->openFile(filename);
 }
 

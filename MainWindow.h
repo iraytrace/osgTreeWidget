@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-
+#include <QPlainTextEdit>
 #include "RecentFiles.h"
 
 namespace Ui {
@@ -35,9 +35,12 @@ private slots:
 
 private:
     bool shouldAbortClose();
+    void doGdalLoad(QString fileName);
 
     Ui::MainWindow *ui;
     RecentFiles m_recentFiles;
+
+    QPlainTextEdit m_pte;
 };
 
 #endif // MAINWINDOW_H
