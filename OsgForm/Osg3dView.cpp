@@ -110,7 +110,8 @@ QString Osg3dView::mouseModeDescription(Osg3dView::MouseMode mouseMode)
     case MM_ZOOM: return QString("Zoom"); break;
     case MM_ROTATE: return QString("Rotate"); break;
     case MM_PICK_CENTER: return QString("CenterPick"); break;
-    case MM_SELECT: return QString("Select"); break;
+    case MM_SELECTOBJECT: return QString("Select"); break;
+    case MM_PICKPOINT: return QString("Pick Point"); break;
     default:
         break;
     }
@@ -118,7 +119,15 @@ QString Osg3dView::mouseModeDescription(Osg3dView::MouseMode mouseMode)
 }
 void Osg3dView::setMouseMode(Osg3dView::MouseMode mode)
 {
+    MouseMode oldMode = m_mouseMode;
     m_mouseMode = mode;
+
+    foreach (QAction *a, m_mouseModeActions) {
+        if (a->data().toUInt() == oldMode)
+            a->setChecked(false);
+        if (a->data().toUInt() == mode)
+            a->setChecked(true);
+    }
 
     if(mode == MM_ROTATE)
         m_viewingCore->setViewingCoreMode( ViewingCore::FIRST_PERSON );
@@ -126,7 +135,7 @@ void Osg3dView::setMouseMode(Osg3dView::MouseMode mode)
         m_viewingCore->setViewingCoreMode( ViewingCore::THIRD_PERSON );
     }
 
-    emit mouseModeChanged(mode);
+    emit mouseModeChanged(oldMode, mode);
 }
 
 osg::Vec2d Osg3dView::getNormalized(const int ix, const int iy)
@@ -233,20 +242,82 @@ osg::NodePath Osg3dView::getFirstLoadedItemClicked()
 
         // if this is a child of loaded model we are done, return the NodePath
         if (oneIntersection.nodePath.at(0) == root &&
-            oneIntersection.nodePath.at(1) == root->getChild(0))
+            oneIntersection.nodePath.at(1) == root->getChild(0)) {
             return oneIntersection.nodePath;
+        }
     }
 
     return nothing;
 }
 
+void Osg3dView::pickPointOnObject()
+{
+    if (!m_clickIntersector->containsIntersections())
+        return;
+
+    osgUtil::LineSegmentIntersector::Intersections & intersections =
+            m_clickIntersector->getIntersections();
+
+    for (osgUtil::LineSegmentIntersector::Intersections::iterator itr =
+         intersections.begin();
+         itr != intersections.end() ;
+         itr++) {
+        const osgUtil::LineSegmentIntersector::Intersection &oneIntersection =
+                *itr;
+
+        osg::Group *root = this->getSceneData()->asGroup();
+
+        // if this is a child of loaded model we are done, return the NodePath
+        if (oneIntersection.nodePath.at(0) == root &&
+            oneIntersection.nodePath.at(1) == root->getChild(0)) {
+            osg::Vec3d pt = oneIntersection.getWorldIntersectPoint();
+            emit pointPicked(pt);
+            return;
+        }
+    }
+}
+
+#include <osg/LineWidth>
 void Osg3dView::pickAnObjectFromView()
 {
     if (numberOfIntersections() == 0)
         return;
 
-    osg::NodePath np = getFirstLoadedItemClicked();
 
+    osgUtil::LineSegmentIntersector::Intersections & intersections =
+            m_clickIntersector->getIntersections();
+
+    const osgUtil::LineSegmentIntersector::Intersection &oneIntersection =
+            *intersections.begin();
+
+    osg::Drawable *d = oneIntersection.drawable;
+    osg::Geometry *geom = (osg::Geometry *)d->asGeometry()->clone(osg::CopyOp(osg::CopyOp::SHALLOW_COPY));
+    if (!geom) return;
+
+    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
+    (*colors)[0].set( 1.0f, 1.0f, 1.0f, 1.0f);
+    geom->setColorArray(colors.get());
+    geom->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    osg::Geode *geode = new osg::Geode;
+    geode->addDrawable(geom);
+    osg::StateSet *ss = geode->getOrCreateStateSet();
+    osg::ref_ptr<osg::PolygonMode> pm =
+               dynamic_cast<osg::PolygonMode *>
+               (ss->getAttribute(osg::StateAttribute::POLYGONMODE));
+    if(!pm) {
+        pm = new osg::PolygonMode;
+        ss->setAttribute(pm.get());
+    }
+    pm->setMode(osg::PolygonMode::FRONT_AND_BACK,
+                osg::PolygonMode::LINE);
+    ss->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    ss->setAttribute(new osg::LineWidth(5.0f));
+
+    this->getSceneData()->asGroup()->addChild(geode);
+    update();
+
+    osg::NodePath np = getFirstLoadedItemClicked();
 
     // turn pointers into ref_ptrs because we don't know
     // where this will end up
@@ -284,10 +355,12 @@ void Osg3dView::mousePressEvent(QMouseEvent *event)
             m_viewingCore->pickCenter(m_savedEventNDCoords.x(),
                                       m_savedEventNDCoords.y() );
             update();
-        } else if (m_mouseMode & MM_SELECT) {
+        } else if (m_mouseMode & MM_SELECTOBJECT) {
             // In this case we probably want to skip any intersections with
             // objects other than those under loadedModel;
             pickAnObjectFromView();
+        } else if (m_mouseMode & MM_PICKPOINT) {
+            pickPointOnObject();
         }
 
         m_mouseIsPressed = true;
@@ -353,20 +426,45 @@ void Osg3dView::wheelEvent(QWheelEvent *event)
 void Osg3dView::buildPopupMenu()
 {
     QAction *a;
+    m_popupMenu.setTitle("3dView");
     QMenu *sub = m_popupMenu.addMenu("MouseMode...");
+    sub->setObjectName("MouseMode...");
 
     a = sub->addAction("Orbit", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_O));
     a->setData(QVariant(MM_ORBIT));
+    a->setCheckable(true);
+    a->setChecked(true);
+    m_mouseModeActions.push_back(a);
     a = sub->addAction("Pan", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_P));
     a->setData(QVariant(MM_PAN));
+    a->setCheckable(true);
+    a->setChecked(false);
+    m_mouseModeActions.push_back(a);
     a = sub->addAction("Rotate", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_R));
     a->setData(QVariant(MM_ROTATE));
+    a->setCheckable(true);
+    a->setChecked(false);
+    m_mouseModeActions.push_back(a);
     a = sub->addAction("Zoom", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_Z));
     a->setData(QVariant(MM_ZOOM));
+    a->setCheckable(true);
+    a->setChecked(false);
+    m_mouseModeActions.push_back(a);
     a = sub->addAction("Pick Center", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_C));
     a->setData(QVariant(MM_PICK_CENTER));
+    a->setCheckable(true);
+    a->setChecked(false);
+    m_mouseModeActions.push_back(a);
     a = sub->addAction("Select Object", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_S));
-    a->setData(QVariant(MM_SELECT));
+    a->setData(QVariant(MM_SELECTOBJECT));
+    a->setCheckable(true);
+    a->setChecked(false);
+    a = sub->addAction("Pick Point", this, SLOT(setMouseMode()), QKeySequence(Qt::CTRL+ Qt::Key_P));
+    m_mouseModeActions.push_back(a);
+    a->setData(QVariant(MM_PICKPOINT ));
+    a->setCheckable(true);
+    a->setChecked(false);
+    m_mouseModeActions.push_back(a);
 
     sub = m_popupMenu.addMenu("Std View...");
     a = sub->addAction("Top", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_T));
@@ -399,6 +497,7 @@ void Osg3dView::buildPopupMenu()
     sub = m_popupMenu.addMenu("Toggle...");
     a = sub->addAction("MenuBar", this, SIGNAL(toggleMenuBar()), QKeySequence(Qt::CTRL+ Qt::Key_M));
     a = sub->addAction("ToolBar", this, SIGNAL(toggleToolBar()), QKeySequence(Qt::CTRL+ Qt::Key_T));
+    a = sub->addAction("PointDisplay", this, SIGNAL(togglePickedPoint()), QKeySequence(Qt::CTRL+ Qt::SHIFT + Qt::Key_P));
 }
 
 void Osg3dView::customMenuRequested(const QPoint &pos)
@@ -430,7 +529,6 @@ void Osg3dView::setMouseMode()
     QAction *a = dynamic_cast<QAction *>(sender());
     if (!a)
         return;
-
     MouseMode mode = static_cast<MouseMode>(a->data().toUInt());
     setMouseMode(mode);
 }
@@ -560,7 +658,15 @@ void Osg3dView::keyPressEvent(QKeyEvent *event)
         break;
     case Qt::Key_U: if (isShifted) m_viewingCore->viewBottom(); update(); break;
     case Qt::Key_O: setMouseMode(MM_ORBIT); break;
-    case Qt::Key_P: setMouseMode(MM_PAN); break;
+    case Qt::Key_P:
+        if (event->modifiers() & Qt::ControlModifier)
+            if (event->modifiers() & Qt::ShiftModifier)
+                emit togglePickedPoint();
+            else
+                setMouseMode(MM_PICKPOINT);
+        else
+            setMouseMode(MM_PAN);
+        break;
     case Qt::Key_Z: setMouseMode(MM_ZOOM); break;
     case Qt::Key_R:
         if (isShifted) {
@@ -570,6 +676,6 @@ void Osg3dView::keyPressEvent(QKeyEvent *event)
             setMouseMode(MM_ROTATE);
         break;
     case Qt::Key_C: setMouseMode(MM_PICK_CENTER); break;
-    case Qt::Key_S: setMouseMode(MM_SELECT); break;
+    case Qt::Key_S: setMouseMode(MM_SELECTOBJECT); break;
     }
 }

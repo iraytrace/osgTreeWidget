@@ -14,6 +14,7 @@
 #include <QRegExpValidator>
 #include <QToolBar>
 #include <QMenuBar>
+#include "OriginAxis.h"
 #include "VariantPtr.h"
 
 #define numRowsOfLayerButtons 2
@@ -33,6 +34,8 @@ OsgForm::OsgForm(QWidget *parent) :
     m_loadedModel->setName("loadedModel");
     m_root->addChild(m_loadedModel);
 
+    m_root->addChild(m_axis.getNode());
+    m_root->addChild(m_pointIndicator.getNode());
 
     ui->osg3dView->setScene(m_root);
     m_viewingCore = ui->osg3dView->getViewingCore();
@@ -40,8 +43,8 @@ OsgForm::OsgForm(QWidget *parent) :
     connect(ui->osg3dView, SIGNAL(pickObject(QVector<osg::ref_ptr<osg::Node> >)),
             this, SLOT(handlePick(QVector<osg::ref_ptr<osg::Node> >)));
 
-    connect(ui->osg3dView, SIGNAL(mouseModeChanged(Osg3dView::MouseMode)),
-            this, SLOT(announceMouseMode(Osg3dView::MouseMode)));
+    connect(ui->osg3dView, SIGNAL(mouseModeChanged(Osg3dView::MouseMode, Osg3dView::MouseMode)),
+            this, SLOT(mouseModeHasChanged(Osg3dView::MouseMode, Osg3dView::MouseMode)));
 
     connect(ui->osg3dView, SIGNAL(updated()),
             this, SLOT(updateCameraDisplay()));
@@ -50,6 +53,11 @@ OsgForm::OsgForm(QWidget *parent) :
             this, SLOT(toggle3dMenu()));
     connect(ui->osg3dView, SIGNAL(toggleToolBar()),
             this, SLOT(toggle3dTools()));
+
+    connect(ui->osg3dView, SIGNAL(pointPicked(osg::Vec3d)),
+            this, SLOT(pointPicked(osg::Vec3d)));
+    connect(ui->osg3dView, SIGNAL(togglePickedPoint()),
+            this, SLOT(togglePickPoint()));
 }
 
 OsgForm::~OsgForm()
@@ -99,6 +107,16 @@ void OsgForm::toggle3dTools()
     }
 }
 
+void OsgForm::togglePickPoint()
+{
+    if (m_pointIndicator.getNode()->getNodeMask())
+        m_pointIndicator.getNode()->setNodeMask(0);
+    else
+        m_pointIndicator.getNode()->setNodeMask(~0);
+
+    ui->osg3dView->update();
+}
+
 void OsgForm::toggle3dMenu()
 {
     if (m_viewMenuBar->isVisible()) {
@@ -116,15 +134,15 @@ void OsgForm::setupUserInterface()
         vbl->insertWidget(0, m_viewToolBar);
         vbl->insertWidget(0, m_viewMenuBar);
 
-        QMenu *viewmenu = new QMenu("view");
-        viewmenu->addAction("top");
-        viewmenu->addAction("front");
-        viewmenu->addAction("right");
+        QMenu *viewMenu = ui->osg3dView->getMenu();
 
-        m_viewMenuBar->addMenu(viewmenu);
+        foreach (QAction *a, viewMenu->actions()) {
+            m_viewMenuBar->addAction(a);
+        }
 
-        m_viewToolBar->addAction("hello");
-        m_viewToolBar->addAction("goodBye");
+        m_viewToolBar->addActions(
+                ui->osg3dView->getMouseModeActions());
+
 
         m_viewToolBar->hide();
         m_viewMenuBar->hide();
@@ -249,6 +267,14 @@ void OsgForm::handlePick(QVector<osg::ref_ptr<osg::Node> > nodePath)
     ui->osgTreeWidget->setCurrentItem(root);
 }
 
+void OsgForm::showAxis(bool isShown)
+{
+    if (isShown)
+        m_axis.getNode()->setNodeMask(~0);
+    else
+        m_axis.getNode()->setNodeMask(0);
+}
+
 
 void OsgForm::setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask)
 {
@@ -256,9 +282,13 @@ void OsgForm::setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask)
     ui->osg3dView->update();
 }
 
-void OsgForm::announceMouseMode(Osg3dView::MouseMode mouseMode)
+void OsgForm::mouseModeHasChanged(Osg3dView::MouseMode oldMouseMode,
+                                Osg3dView::MouseMode newMouseMode)
 {
-    emit showMessage( Osg3dView::mouseModeDescription(mouseMode) );
+    if (newMouseMode == Osg3dView::MM_PICKPOINT) {
+        m_pointIndicator.getNode()->setNodeMask(~0);
+    }
+    emit showMessage( Osg3dView::mouseModeDescription(newMouseMode) );
 }
 
 void OsgForm::updateCameraDisplay()
@@ -281,10 +311,22 @@ void OsgForm::updateCameraDisplay()
     ui->azElLineEdit->setText(QString("%1 %2 %3").arg(yaw).arg(pitch).arg(roll));
 }
 
+void OsgForm::pointPicked(osg::Vec3d pt)
+{
+    m_pointIndicator.setPosition(pt);
+    m_pointIndicator.getNode()->setNodeMask(~0);
+    ui->osg3dView->update();
+}
+
 osg::ref_ptr<osg::Node> OsgForm::readNodes(const QString fileName)
 {
     osg::ref_ptr<osg::Node> loaded = osgDB::readNodeFile(fileName.toStdString());
     return loaded;
+}
+
+void OsgForm::buildTheTools()
+{
+
 }
 void OsgForm::setProgressBarState(bool turnOn)
 {
