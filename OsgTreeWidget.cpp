@@ -3,6 +3,9 @@
 
 #include <osg/Group>
 #include <osg/Geode>
+#include <osg/Geometry>
+#include <osg/StateSet>
+#include <osg/Material>
 #include <QtConcurrent/QtConcurrent>
 #include <QFuture>
 #include <QMessageBox>
@@ -63,9 +66,27 @@ QTreeWidgetItem * OsgTreeWidget::addObjectItem(osg::Object *object,
     newItem->setText(1, object->className());
     newItem->setData(0, Qt::UserRole, VariantPtr<osg::Object>::asQVariant(object));
     newItem->setFlags(Qt::ItemIsEnabled|Qt::ItemIsSelectable|Qt::ItemIsEditable);
+    if (osg::StateSet *ss = dynamic_cast<osg::StateSet *>(object)) {
+        osg::StateAttribute *sa = ss->getAttribute(osg::StateAttribute::MATERIAL);
+        if (!sa) return newItem;
+        osg::Material *m = dynamic_cast<osg::Material *>(sa);
+        if (!m) return newItem;
+        newItem->addChild(addObjectItem(m, newItem->text(0)));
+    }
+
+    if (osg::Geometry *geom = dynamic_cast<osg::Geometry *>(object)) {
+        if (osg::StateSet *ss = geom->getStateSet()) {
+            newItem->addChild(addObjectItem(ss, newItem->text(0)));
+        }
+    }
 
     if (osg::Node *n = dynamic_cast<osg::Node *>(object)) {
         newItem->setText(2, QString("").setNum(n->getNodeMask(), 16));
+
+        if (osg::StateSet *ss = n->getStateSet()) {
+            newItem->addChild(addObjectItem(ss, newItem->text(0)));
+        }
+
 
         if (osg::Group *group = n->asGroup()) {
             for (unsigned i = 0 ; i < group->getNumChildren() ; i++) {

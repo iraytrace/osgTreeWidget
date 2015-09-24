@@ -7,6 +7,8 @@
 #include <osg/Drawable>
 #include <osg/Group>
 #include <osg/Geode>
+#include <osg/StateSet>
+#include <osg/Material>
 
 #include "VariantPtr.h"
 static const bool thisDebug = false;
@@ -37,6 +39,8 @@ void OsgPropertyTable::displayObject(osg::ref_ptr<osg::Object> object)
         setTableValuesForObject(object);
         setTableValuesForNode(dynamic_cast<osg::Node *>(object.get()));
         setTableValuesForDrawable(dynamic_cast<osg::Drawable *>(object.get()));
+        setTableValuesForStateSet(dynamic_cast<osg::StateSet *>(object.get()));
+        setTableValuesForMaterial(dynamic_cast<osg::Material *>(object.get()));
     }
 
     resizeColumnsToContents();
@@ -160,6 +164,10 @@ void OsgPropertyTable::setTableValuesForGroup(osg::Group *group)
 {
     if(!group) return;
     setTextForKey("NumChildren", QString("%1").arg(group->getNumChildren()));
+
+    osg::StateSet * ss = group->getStateSet();
+    setTableValuesForStateSet(ss);
+
 }
 void OsgPropertyTable::setTableValuesForGeode(osg::Geode *geode)
 {
@@ -173,6 +181,10 @@ void OsgPropertyTable::setTableValuesForGeode(osg::Geode *geode)
                   .arg(bs.center().x())
                   .arg(bs.center().y())
                   .arg(bs.center().z()));
+
+    osg::StateSet * ss = geode->getStateSet();
+    setTableValuesForStateSet(ss);
+
 }
 void OsgPropertyTable::setTableValuesForDrawable(osg::Drawable *drawable)
 {
@@ -183,6 +195,9 @@ void OsgPropertyTable::setTableValuesForDrawable(osg::Drawable *drawable)
 
     setTableValuesForGeometry(drawable->asGeometry());
 }
+#include <osg/StateAttribute>
+#include <osg/StateSet>
+#include <osg/Material>
 void OsgPropertyTable::setTableValuesForGeometry(osg::Geometry *geometry)
 {
     if (!geometry) return;
@@ -206,5 +221,35 @@ void OsgPropertyTable::setTableValuesForGeometry(osg::Geometry *geometry)
 
     setTextForKey("TextCoordArrayCount",
                   QString("%1").arg(geometry->getNumTexCoordArrays()));
+
+    osg::StateSet * ss = geometry->getStateSet();
+    setTableValuesForStateSet(ss);
+}
+static QString formatVec4(const osg::Vec4 colorQuad)
+{
+    return QString("%1 %2 %3 %4").arg(colorQuad[0]).arg(colorQuad[1]).arg(colorQuad[2]).arg(colorQuad[3]);
+}
+
+void OsgPropertyTable::setTableValuesForStateSet(osg::StateSet *ss)
+{
+    if (!ss) return;
+    osg::StateAttribute *sa = ss->getAttribute(osg::StateAttribute::MATERIAL);
+    if (!sa) return;
+
+    osg::Material *m = dynamic_cast<osg::Material *>(sa);
+    setTableValuesForMaterial(m);
+}
+
+void OsgPropertyTable::setTableValuesForMaterial(osg::Material *m)
+{
+    if (!m) return;
+    const osg::Vec4 diffuse = m->getDiffuse(osg::Material::FRONT);
+    setTextForKey("DiffuseColor", formatVec4(diffuse));
+
+    const osg::Vec4 specular = m->getSpecular(osg::Material::FRONT);
+    setTextForKey("SpecularColor", formatVec4(specular));
+
+    float shine = m->getShininess(osg::Material::FRONT);
+    setTextForKey("shininess", QString("%2").arg(shine));
 
 }

@@ -12,6 +12,8 @@ class Group;
 class Geode;
 class Drawable;
 class Geometry;
+class StateSet;
+class Material;
 }
 
 class OsgPropertyTable : public QTableWidget
@@ -35,6 +37,8 @@ private:
     void setTableValuesForGeode(osg::Geode *geode);
     void setTableValuesForDrawable(osg::Drawable *drawable);
     void setTableValuesForGeometry(osg::Geometry *geometry);
+    void setTableValuesForStateSet(osg::StateSet *ss);
+    void setTableValuesForMaterial(osg::Material *m);
 
     QTableWidgetItem *getOrCreateWidgetItem(QTableWidget *tw, int row, int col);
     QTableWidgetItem *itemForKey(const QString key);
