@@ -12,7 +12,8 @@
 #include <QTableWidgetItem>
 #include <QTreeWidgetItem>
 #include <QRegExpValidator>
-
+#include <QToolBar>
+#include <QMenuBar>
 #include "VariantPtr.h"
 
 #define numRowsOfLayerButtons 2
@@ -22,13 +23,16 @@ OsgForm::OsgForm(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::OsgForm),
     m_root(new osg::Group),
-    m_loadedModel(new osg::Group)
+    m_loadedModel(new osg::MatrixTransform),
+    m_viewToolBar(new QToolBar),
+    m_viewMenuBar(new QMenuBar)
 {
     ui->setupUi(this);
     setupUserInterface();
     m_root->setName("root");
     m_loadedModel->setName("loadedModel");
     m_root->addChild(m_loadedModel);
+
 
     ui->osg3dView->setScene(m_root);
     m_viewingCore = ui->osg3dView->getViewingCore();
@@ -41,6 +45,11 @@ OsgForm::OsgForm(QWidget *parent) :
 
     connect(ui->osg3dView, SIGNAL(updated()),
             this, SLOT(updateCameraDisplay()));
+
+    connect(ui->osg3dView, SIGNAL(toggleMenuBar()),
+            this, SLOT(toggle3dMenu()));
+    connect(ui->osg3dView, SIGNAL(toggleToolBar()),
+            this, SLOT(toggle3dTools()));
 }
 
 OsgForm::~OsgForm()
@@ -81,9 +90,47 @@ void OsgForm::buildLayerBox()
     grid->setVerticalSpacing(0);
     grid->setContentsMargins(0,0,0,0);
 }
+void OsgForm::toggle3dTools()
+{
+    if (m_viewToolBar->isVisible()) {
+        m_viewToolBar->hide();
+    } else {
+        m_viewToolBar->show();
+    }
+}
+
+void OsgForm::toggle3dMenu()
+{
+    if (m_viewMenuBar->isVisible()) {
+        m_viewMenuBar->hide();
+    } else {
+        m_viewMenuBar->show();
+    }
+}
 
 void OsgForm::setupUserInterface()
 {
+    QVBoxLayout *vbl = dynamic_cast<QVBoxLayout*>(ui->leftWidget->layout());
+
+    if (vbl) {
+        vbl->insertWidget(0, m_viewToolBar);
+        vbl->insertWidget(0, m_viewMenuBar);
+
+        QMenu *viewmenu = new QMenu("view");
+        viewmenu->addAction("top");
+        viewmenu->addAction("front");
+        viewmenu->addAction("right");
+
+        m_viewMenuBar->addMenu(viewmenu);
+
+        m_viewToolBar->addAction("hello");
+        m_viewToolBar->addAction("goodBye");
+
+        m_viewToolBar->hide();
+        m_viewMenuBar->hide();
+    }
+
+
     buildLayerBox();
     connect(ui->osgTreeWidget, SIGNAL(currentObject(osg::ref_ptr<osg::Object>)),
             ui->osgPropertyTable, SLOT(displayObject(osg::ref_ptr<osg::Object>)));
@@ -269,6 +316,10 @@ void OsgForm::readNodesFinished()
     } else {
         qDebug("loaded Node of type %s", loaded->className());
     }
+
+    if (loaded->getName().size() == 0)
+        loaded->setName(basename(qPrintable(loadedFileName)));
+
     addNode(loaded);
 }
 
