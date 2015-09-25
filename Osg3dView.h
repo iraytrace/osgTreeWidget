@@ -7,6 +7,7 @@
 
 #include <osgViewer/Viewer>
 #include <osgUtil/IntersectionVisitor>
+#include <osg/PolygonMode>
 
 #include "ViewingCore.h"
 
@@ -55,7 +56,7 @@ public slots:
     void setMouseMode(MouseMode mode);
     void setMouseMode();
     void setStandardView();
-    void setDrawMode();
+    void setDrawMode(osg::PolygonMode::Mode drawMode = (osg::PolygonMode::Mode)0);
     void setProjection();
 
     void enterEvent(QEvent *event);
@@ -72,6 +73,9 @@ signals:
     void mouseModeChanged(Osg3dView::MouseMode);
     void updated();
     void pickObject(QVector< osg::ref_ptr<osg::Node> > nodePath);
+    void nodePathClicked(osg::NodePath);
+    void toggleToolBar();
+    void toggleMenuBar();
 
 private:
     osg::Vec2d getNormalized(const int ix, const int iy);
@@ -82,8 +86,38 @@ private:
     /// back facing polygons so that the world behaves in a more normal fashion.
     /// Yes it's a performance hit.
     void setLightingTwoSided();
-
     void buildPopupMenu();
+
+    /// fast convenience routine to get the first child of the root
+    osg::Node *getLoadedModel();
+
+    /// given that something was clicked, announce it to the world so
+    /// that other classes can pay attention to the same object
+    void pickAnObjectFromView();
+
+
+    /// Each time the mouse is clicked we do a LineSegmentIntersector
+    /// The results are stashed in m_clickIntersector.  Various
+    /// methods allow convenient queries about what (if anything) was
+    /// found as a result of this click
+    /// XXX Some of this may be worth exposing to OsgForm at some point
+    void findObjectsUnderMouseEvent(); ///< calls LineSegmentIntersector
+
+    /// just how many things were found under the mouse event?
+    unsigned numberOfIntersections();
+
+    osg::ref_ptr<osgUtil::LineSegmentIntersector> m_clickIntersector;
+
+    /// Find the first loaded item at the click location
+    osg::NodePath getFirstLoadedItemClicked();
+
+    /// find the very first thing clicked (if any) so we can manipulate controls
+    osg::NodePath getFirstItemClicked();
+
+    /// was it loaded or a control?  Note:  returns false if nothing clicked
+    bool firstItemClickedWasLoaded();
+
+
 
     QMenu m_popupMenu;
 
@@ -100,8 +134,15 @@ private:
     int m_timeToDrawLastFrame;
     osg::Vec2d m_savedEventNDCoords;
 
-    void pickAnObjectFromView();
+    // since we always want the 3D view to have focus when entered
+    // it is polite to remember who had the focus when we stole it
+    // and restore it when the cursor leaves the window
     QWidget *m_lastFocused;
+
+
+
+
+
 };
 
 #endif // OSGVIEW_H

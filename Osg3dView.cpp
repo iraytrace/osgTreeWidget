@@ -7,12 +7,11 @@
 #include <osgViewer/Renderer>
 #include <osg/ValueObject>
 #include <osg/StateSet>
-#include <osg/PolygonMode>
 #include <osgUtil/IntersectionVisitor>
 #include <osgUtil/LineSegmentIntersector>
 
 #include <QKeySequence>
-
+#include <QToolBar>
 static const bool debugView = false;
 #define vDebug if (debugView) qDebug
 
@@ -25,6 +24,12 @@ Osg3dView::Osg3dView(QWidget *parent)
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, SIGNAL(customContextMenuRequested(QPoint)),
             this, SLOT(customMenuRequested(QPoint)));
+#if 0   // This would be interesting to have  Perhaps it belongs in OsgForm
+        // Alas, it would be hard to design in qtdesigner
+        QToolBar *tb = new QToolBar(this);
+        tb->addAction("Hello");
+        tb->addAction("goodbye");
+#endif
     buildPopupMenu();
 
     // Construct the embedded graphics window
@@ -142,57 +147,134 @@ osg::Vec2d Osg3dView::getNormalized(const int ix, const int iy)
 
     return ndc;
 }
-void Osg3dView::pickAnObjectFromView()
+
+void Osg3dView::findObjectsUnderMouseEvent()
 {
-    osg::ref_ptr<osgUtil::IntersectionVisitor> m_intersectionVisitor;
+    osg::ref_ptr<osgUtil::IntersectionVisitor> theIntersectionVisitor;
     osg::Vec3d startPoint;
-    osg::Vec3d farPoint =
-            m_viewingCore->getFarPoint(m_savedEventNDCoords.x(),
-                                       m_savedEventNDCoords.y());
-    m_viewingCore->getStartPoint(startPoint, farPoint,
+    osg::Vec3d farPoint = m_viewingCore->getFarPoint(m_savedEventNDCoords.x(),
+                                                     m_savedEventNDCoords.y());
+
+    m_viewingCore->getStartPoint(startPoint,
+                                 farPoint,
                                  m_savedEventNDCoords.x(),
                                  m_savedEventNDCoords.y());
-    osgUtil::LineSegmentIntersector* intersector =
+
+    m_clickIntersector =
             new osgUtil::LineSegmentIntersector( startPoint, farPoint );
-    // m_intersectionVisitor assumes owndership of intersector via
-    // an internal ref_ptr inside setIntersector();
-    m_intersectionVisitor = new osgUtil::IntersectionVisitor( intersector, NULL );
-    this->getSceneData()->accept( *m_intersectionVisitor );
 
-    if (intersector->containsIntersections()) {
-        osgUtil::LineSegmentIntersector::Intersections & intersections =
-                intersector->getIntersections();
-#if 0
-        for (osgUtil::LineSegmentIntersector::Intersections::iterator itr =
-             intersections.begin();
-             itr != intersections.end() ;
-             ++itr) {
+    theIntersectionVisitor = new osgUtil::IntersectionVisitor( m_clickIntersector, NULL );
+    this->getSceneData()->accept( *theIntersectionVisitor );
+}
 
-        }
-#else
-        osgUtil::LineSegmentIntersector::Intersections::iterator itr =
-                             intersections.begin();
+osg::NodePath Osg3dView::getFirstItemClicked()
+{
+    osg::NodePath nothing;
+
+    if (!m_clickIntersector->containsIntersections()) {
+        return nothing;
+    }
+
+    osgUtil::LineSegmentIntersector::Intersections & intersections =
+            m_clickIntersector->getIntersections();
+
+    const osgUtil::LineSegmentIntersector::Intersection &oneIntersection =
+            *intersections.begin();
+
+    return oneIntersection.nodePath;
+}
+
+bool Osg3dView::firstItemClickedWasLoaded()
+{
+    if (!m_clickIntersector->containsIntersections())
+        return false;
+
+    osgUtil::LineSegmentIntersector::Intersections & intersections =
+            m_clickIntersector->getIntersections();
+
+    const osgUtil::LineSegmentIntersector::Intersection &oneIntersection =
+            *intersections.begin();
+
+    osg::Group *root = this->getSceneData()->asGroup();
+
+    if (oneIntersection.nodePath.at(0) == root &&
+        oneIntersection.nodePath.at(1) == root->getChild(0))
+        return true;
+
+    return false;
+}
+
+unsigned Osg3dView::numberOfIntersections()
+{
+    osgUtil::LineSegmentIntersector::Intersections & intersections =
+            m_clickIntersector->getIntersections();
+
+    return intersections.size();
+}
+
+osg::NodePath Osg3dView::getFirstLoadedItemClicked()
+{
+    osg::NodePath nothing;
+
+    if (!m_clickIntersector->containsIntersections())
+        return nothing;
+
+    osgUtil::LineSegmentIntersector::Intersections & intersections =
+            m_clickIntersector->getIntersections();
+
+    for (osgUtil::LineSegmentIntersector::Intersections::iterator itr =
+         intersections.begin();
+         itr != intersections.end() ;
+         itr++) {
         const osgUtil::LineSegmentIntersector::Intersection &oneIntersection =
                 *itr;
-        QVector< osg::ref_ptr<osg::Node> > myNodePath;
-        // turn pointers into ref_ptrs
-        osg::NodePath np = oneIntersection.nodePath;
-        for (unsigned i=0 ; i < np.size() ; i++) {
-            osg::ref_ptr<osg::Node> saveMe(np.at(i));
-            myNodePath.push_back(saveMe);
-        }
 
-        emit pickObject(myNodePath);
-#endif
+        osg::Group *root = this->getSceneData()->asGroup();
+
+        // if this is a child of loaded model we are done, return the NodePath
+        if (oneIntersection.nodePath.at(0) == root &&
+            oneIntersection.nodePath.at(1) == root->getChild(0))
+            return oneIntersection.nodePath;
     }
+
+    return nothing;
 }
+
+void Osg3dView::pickAnObjectFromView()
+{
+    if (numberOfIntersections() == 0)
+        return;
+
+    osg::NodePath np = getFirstLoadedItemClicked();
+
+
+    // turn pointers into ref_ptrs because we don't know
+    // where this will end up
+    QVector< osg::ref_ptr<osg::Node> > myNodePath;
+    for (unsigned i=0 ; i < np.size() ; i++) {
+        osg::ref_ptr<osg::Node> saveMe(np.at(i));
+        myNodePath.push_back(saveMe);
+    }
+
+    emit pickObject(myNodePath);
+}
+
 
 void Osg3dView::mousePressEvent(QMouseEvent *event)
 {
     vDebug("mousePressEvent");
 
     if (event->button() == Qt::LeftButton) {
+
         m_savedEventNDCoords = getNormalized(event->x(), event->y());
+
+        // always identify the item under the mouse in case
+        // it is a drag object
+        findObjectsUnderMouseEvent();
+
+        // if np.at(1) != loadedModel we are dragging/clicking some control
+        // in that case we want to stash the current mouse mode, do the drag
+        // and restore the mouse mode when we are done.
 
         // Do the job asked
         if (m_mouseMode & (MM_PAN|MM_ROTATE|MM_ORBIT|MM_ZOOM) )
@@ -203,6 +285,8 @@ void Osg3dView::mousePressEvent(QMouseEvent *event)
                                       m_savedEventNDCoords.y() );
             update();
         } else if (m_mouseMode & MM_SELECT) {
+            // In this case we probably want to skip any intersections with
+            // objects other than those under loadedModel;
             pickAnObjectFromView();
         }
 
@@ -271,23 +355,23 @@ void Osg3dView::buildPopupMenu()
     QAction *a;
     QMenu *sub = m_popupMenu.addMenu("MouseMode...");
 
-    a = sub->addAction("Orbit", this, SLOT(setMouseMode()), QKeySequence("o"));
+    a = sub->addAction("Orbit", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_O));
     a->setData(QVariant(MM_ORBIT));
-    a = sub->addAction("Pan", this, SLOT(setMouseMode()), QKeySequence("p"));
+    a = sub->addAction("Pan", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_P));
     a->setData(QVariant(MM_PAN));
-    a = sub->addAction("Rotate", this, SLOT(setMouseMode()), QKeySequence("r"));
+    a = sub->addAction("Rotate", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_R));
     a->setData(QVariant(MM_ROTATE));
-    a = sub->addAction("Zoom", this, SLOT(setMouseMode()), QKeySequence("z"));
+    a = sub->addAction("Zoom", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_Z));
     a->setData(QVariant(MM_ZOOM));
-    a = sub->addAction("Pick Center", this, SLOT(setMouseMode()), QKeySequence("c"));
+    a = sub->addAction("Pick Center", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_C));
     a->setData(QVariant(MM_PICK_CENTER));
-    a = sub->addAction("Select Object", this, SLOT(setMouseMode()), QKeySequence("s"));
+    a = sub->addAction("Select Object", this, SLOT(setMouseMode()), QKeySequence(Qt::Key_S));
     a->setData(QVariant(MM_SELECT));
 
     sub = m_popupMenu.addMenu("Std View...");
     a = sub->addAction("Top", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_T));
     a->setData(V_TOP);
-    a = sub->addAction("Bottom", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_U));
+    a = sub->addAction("Underside", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_U));
     a->setData(V_BOTTOM);
     a = sub->addAction("Front", this, SLOT(setStandardView()), QKeySequence(Qt::SHIFT + Qt::Key_F));
     a->setData(V_FRONT);
@@ -305,12 +389,16 @@ void Osg3dView::buildPopupMenu()
     a->setData(P_PERSP);
 
     sub = m_popupMenu.addMenu("DrawMode...");
-    a = sub->addAction("Facets", this, SLOT(setDrawMode()));
+    a = sub->addAction("Facets", this, SLOT(setDrawMode()), QKeySequence(Qt::Key_F));
     a->setData(osg::PolygonMode::FILL);
-    a = sub->addAction("Wireframe", this, SLOT(setDrawMode()));
+    a = sub->addAction("Wireframe", this, SLOT(setDrawMode()), QKeySequence(Qt::Key_W));
     a->setData(osg::PolygonMode::LINE);
-    a = sub->addAction("Points", this, SLOT(setDrawMode()));
+    a = sub->addAction("Verticies", this, SLOT(setDrawMode()), QKeySequence(Qt::Key_V));
     a->setData(osg::PolygonMode::POINT);
+
+    sub = m_popupMenu.addMenu("Toggle...");
+    a = sub->addAction("MenuBar", this, SIGNAL(toggleMenuBar()), QKeySequence(Qt::CTRL+ Qt::Key_M));
+    a = sub->addAction("ToolBar", this, SIGNAL(toggleToolBar()), QKeySequence(Qt::CTRL+ Qt::Key_T));
 }
 
 void Osg3dView::customMenuRequested(const QPoint &pos)
@@ -365,12 +453,15 @@ void Osg3dView::setStandardView()
     update();
 }
 
-void Osg3dView::setDrawMode()
+void Osg3dView::setDrawMode(osg::PolygonMode::Mode drawMode)
 {
-    QAction *a = dynamic_cast<QAction *>(sender());
-    if (!a)
-        return;
+    if (drawMode == 0) {
+        QAction *a = dynamic_cast<QAction *>(sender());
+        if (!a)
+            return;
 
+        drawMode = static_cast<osg::PolygonMode::Mode>(a->data().toUInt());
+    }
 
     osg::ref_ptr<osg::StateSet> ss = this->getSceneData()->getOrCreateStateSet();
     osg::ref_ptr<osg::PolygonMode> pm =
@@ -381,7 +472,6 @@ void Osg3dView::setDrawMode()
         pm = new osg::PolygonMode;
         ss->setAttribute(pm.get());
     }
-    osg::PolygonMode::Mode drawMode = static_cast<osg::PolygonMode::Mode>(a->data().toUInt());
     pm->setMode(osg::PolygonMode::FRONT_AND_BACK,
                 drawMode);
 
@@ -394,7 +484,6 @@ void Osg3dView::setDrawMode()
         ss->setMode(GL_LIGHTING, osg::StateAttribute::ON);
         break;
     }
-
 
     update();
 }
@@ -445,10 +534,30 @@ void Osg3dView::keyPressEvent(QKeyEvent *event)
     bool isShifted = event->modifiers() & Qt::ShiftModifier;
 
     switch (key) {
-    case Qt::Key_T: if (isShifted) m_viewingCore->viewTop(); update(); break;
+    case Qt::Key_M:
+        if (event->modifiers() & Qt::ControlModifier)
+            emit toggleMenuBar();
+        break;
+    case Qt::Key_W: setDrawMode(osg::PolygonMode::LINE); update(); break;
+    case Qt::Key_V: setDrawMode(osg::PolygonMode::POINT); update(); break;
+    case Qt::Key_T:
+        if (isShifted) {
+            m_viewingCore->viewTop();
+            update();
+        } else if (event->modifiers() & Qt::ControlModifier) {
+            emit toggleToolBar();
+        }
+            break;
     case Qt::Key_L: if (isShifted) m_viewingCore->viewLeft(); update(); break;
     case Qt::Key_B: if (isShifted) m_viewingCore->viewBack(); update(); break;
-    case Qt::Key_F: if (isShifted) m_viewingCore->viewFront(); update(); break;
+    case Qt::Key_F:
+        if (isShifted) {
+            m_viewingCore->viewFront();
+        } else {
+            setDrawMode(osg::PolygonMode::FILL);
+        }
+        update();
+        break;
     case Qt::Key_U: if (isShifted) m_viewingCore->viewBottom(); update(); break;
     case Qt::Key_O: setMouseMode(MM_ORBIT); break;
     case Qt::Key_P: setMouseMode(MM_PAN); break;
