@@ -60,6 +60,9 @@ QTreeWidgetItem * OsgTreeWidget::createItemForObject(osg::Object *object,
     newItem->setData(1, Qt::UserRole, parentNumberInChild);
     newItem->setFlags(Qt::ItemIsEnabled|Qt::ItemIsSelectable|Qt::ItemIsEditable);
 
+    if (osg::Node *n = dynamic_cast<osg::Node*>(object)) {
+        newItem->setText(2, QString("").setNum(n->getNodeMask(), 16));
+    }
     return newItem;
 }
 void OsgTreeWidget::ensureObjectHasName(osg::Object *object,

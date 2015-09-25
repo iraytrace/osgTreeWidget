@@ -233,20 +233,54 @@ osg::NodePath Osg3dView::getFirstLoadedItemClicked()
 
         // if this is a child of loaded model we are done, return the NodePath
         if (oneIntersection.nodePath.at(0) == root &&
-            oneIntersection.nodePath.at(1) == root->getChild(0))
+            oneIntersection.nodePath.at(1) == root->getChild(0)) {
             return oneIntersection.nodePath;
+        }
     }
 
     return nothing;
 }
-
+#include <osg/LineWidth>
 void Osg3dView::pickAnObjectFromView()
 {
     if (numberOfIntersections() == 0)
         return;
 
-    osg::NodePath np = getFirstLoadedItemClicked();
 
+    osgUtil::LineSegmentIntersector::Intersections & intersections =
+            m_clickIntersector->getIntersections();
+
+    const osgUtil::LineSegmentIntersector::Intersection &oneIntersection =
+            *intersections.begin();
+
+    osg::Drawable *d = oneIntersection.drawable;
+    osg::Geometry *geom = (osg::Geometry *)d->asGeometry()->clone(osg::CopyOp(osg::CopyOp::SHALLOW_COPY));
+    if (!geom) return;
+
+    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
+    (*colors)[0].set( 1.0f, 1.0f, 1.0f, 1.0f);
+    geom->setColorArray(colors.get());
+    geom->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    osg::Geode *geode = new osg::Geode;
+    geode->addDrawable(geom);
+    osg::StateSet *ss = geode->getOrCreateStateSet();
+    osg::ref_ptr<osg::PolygonMode> pm =
+               dynamic_cast<osg::PolygonMode *>
+               (ss->getAttribute(osg::StateAttribute::POLYGONMODE));
+    if(!pm) {
+        pm = new osg::PolygonMode;
+        ss->setAttribute(pm.get());
+    }
+    pm->setMode(osg::PolygonMode::FRONT_AND_BACK,
+                osg::PolygonMode::LINE);
+    ss->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    ss->setAttribute(new osg::LineWidth(5.0f));
+
+    this->getSceneData()->asGroup()->addChild(geode);
+    update();
+
+    osg::NodePath np = getFirstLoadedItemClicked();
 
     // turn pointers into ref_ptrs because we don't know
     // where this will end up
