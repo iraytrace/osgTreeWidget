@@ -5,6 +5,7 @@
 #include <QPlainTextEdit>
 #include "RecentFiles.h"
 
+class OsgForm;
 namespace Ui {
 class MainWindow;
 }
@@ -41,6 +42,7 @@ private:
     RecentFiles m_recentFiles;
 
     QPlainTextEdit m_pte;
+    OsgForm *m_osgForm;
 };
 
 #endif // MAINWINDOW_H

@@ -5,22 +5,30 @@
 #include <QSettings>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QMdiSubWindow>
 
-
+#include "OsgForm.h"
+#include "GDALloader.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_recentFiles(this)
+    m_recentFiles(this),
+    m_osgForm(new OsgForm)
 
 {
     ui->setupUi(this);
+
+    QMdiSubWindow *msw = ui->mdiArea->addSubWindow(m_osgForm);
+    msw->showMaximized();
+    msw->setAttribute(Qt::WA_DeleteOnClose, false);
+
     m_recentFiles.attachToMenuAfterItem(ui->menuFile, "Open...", SLOT(loadFile(QString)));
     VSLapp::mainWindowSetup(this);
-    connect(ui->osgForm, SIGNAL(showMessage(QString)),
+    connect(m_osgForm, SIGNAL(showMessage(QString)),
             ui->statusBar, SLOT(showMessage(QString)));
     connect(ui->actionClose, SIGNAL(triggered(bool)),
-            ui->osgForm, SLOT(removeAllNodes()));
+            m_osgForm, SLOT(removeAllNodes()));
 }
 
 MainWindow::~MainWindow()
@@ -40,7 +48,7 @@ void MainWindow::on_actionFileOpen_triggered()
 
 void MainWindow::on_actionFileSave_triggered()
 {
-    ui->osgForm->saveFile(
+    m_osgForm->saveFile(
                 m_recentFiles.getRecentFiles().at(0));
 }
 
@@ -51,7 +59,7 @@ void MainWindow::on_actionFileSaveAs_triggered()
                                                     "Save File as",
                                                     settings.value("currentDirectory").toString()
                                                     );
-    ui->osgForm->saveFile(fileName);
+    m_osgForm->saveFile(fileName);
     m_recentFiles.setMostRecentFile(fileName);
 }
 
@@ -72,12 +80,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::doGdalLoad(QString fileName)
 {
-    GDAL_Wrapper *gdal = new GDAL_Wrapper();
+    GDALloader *gdal = new GDALloader();
 
     std::vector<float> buffer = gdal->loadTerrain(fileName);
 
 }
-
+#include <QMessageBox>
 void MainWindow::loadFile(QString filename)
 {
     if (filename.isEmpty())
@@ -94,9 +102,18 @@ void MainWindow::loadFile(QString filename)
     m_recentFiles.setMostRecentFile(filename);
 
     if (filename.endsWith(".tif"))
-        doGdalLoad(fileName);
-    else
-        ui->osgForm->openFile(filename);
+        doGdalLoad(filename);
+    else {
+        if (!m_osgForm->isVisible()) {
+            foreach (QMdiSubWindow *sw, ui->mdiArea->subWindowList()) {
+                if (sw->widget() == m_osgForm) {
+                    sw->show();
+                    m_osgForm->setVisible(true);
+                }
+            }
+        }
+        m_osgForm->openFile(filename);
+    }
 }
 
 bool MainWindow::shouldAbortClose()
