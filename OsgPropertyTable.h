@@ -14,6 +14,7 @@ class Drawable;
 class Geometry;
 class StateSet;
 class Material;
+class MatrixTransform;
 }
 
 class OsgPropertyTable : public QTableWidget
@@ -33,6 +34,7 @@ private slots:
 private:
     void setTableValuesForObject(osg::ref_ptr<osg::Object> object);
     void setTableValuesForNode(osg::Node * node);
+    void setTableValuesForTransform(osg::MatrixTransform *xform);
     void setTableValuesForGroup(osg::Group *group);
     void setTableValuesForGeode(osg::Geode *geode);
     void setTableValuesForDrawable(osg::Drawable *drawable);

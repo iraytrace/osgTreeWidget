@@ -25,9 +25,9 @@ endif (WIN32)
 find_package(OpenSceneGraph 3.0.1 COMPONENTS osg osgDB osgViewer osgGA osgUtil OpenThreads )
 include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 
-#set(ENV{GDAL_DIR} "$ENV{USERPROFILE}/sw")
-#find_package(GDAL REQUIRED)
-#INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
+set(ENV{GDAL_DIR} "$ENV{USERPROFILE}/sw")
+find_package(GDAL REQUIRED)
+INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
 
 # Get the Qt stuff set up.
 # if cmake cannot find Qt you can set Qt5_DIR or uncomment next line
@@ -71,7 +71,7 @@ target_link_LIBRARIES(osgTreeWidget
     Qt5::Widgets
     Qt5::OpenGL
    ${OPENSCENEGRAPH_LIBRARIES}
-#${GDAL_LIBRARY}
+${GDAL_LIBRARY}
   )
 set_target_properties(osgTreeWidget
     PROPERTIES

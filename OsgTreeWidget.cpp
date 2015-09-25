@@ -357,7 +357,11 @@ void OsgTreeWidget::resizeAllColumns()
 
 void OsgTreeWidget::customMenuRequested(const QPoint &pos)
 {
-        m_popupMenu.popup(this->mapToGlobal(pos));
+    // Should disable/enable menu entries
+    // as appropriate for current selected item.
+    // For instance, cannot parent a Geometry to a MatrixTransform
+    // Geometry nodes when a Geometry node is current
+    m_popupMenu.popup(this->mapToGlobal(pos));
 }
 
 void OsgTreeWidget::currentItemWasChanged(QTreeWidgetItem *current,

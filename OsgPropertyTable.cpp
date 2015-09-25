@@ -160,10 +160,25 @@ void OsgPropertyTable::setTableValuesForNode(osg::Node *node)
     setTableValuesForGroup(node->asGroup());
     setTableValuesForGeode(node->asGeode());
 }
+#include <osg/MatrixTransform>
+void OsgPropertyTable::setTableValuesForTransform(osg::MatrixTransform *xform)
+{
+    if (!xform) return;
+
+    osg::Matrix m = xform->getMatrix();
+
+    osg::Vec3d d = m.getTrans();
+    setTextForKey("Xlate", QString("%1 %2 %3").arg(d.x()).arg(d.y()).arg(d.z()));
+
+    d = m.getScale();
+    setTextForKey("Scale", QString("%1 %2 %3").arg(d.x()).arg(d.y()).arg(d.z()));
+}
 void OsgPropertyTable::setTableValuesForGroup(osg::Group *group)
 {
     if(!group) return;
     setTextForKey("NumChildren", QString("%1").arg(group->getNumChildren()));
+
+    setTableValuesForTransform(dynamic_cast<osg::MatrixTransform*>(group));
 
     osg::StateSet * ss = group->getStateSet();
     setTableValuesForStateSet(ss);
