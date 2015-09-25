@@ -331,6 +331,7 @@ void OsgForm::addNode(osg::ref_ptr<osg::Node> n)
 
     m_loadedModel->addChild(n);
     if (m_loadedModel->getNumChildren() == 1) {
+        m_viewingCore->viewTop();
         m_viewingCore->fitToScreen();
     }
     setProgressBarState(false); // triggers an update()

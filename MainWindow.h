@@ -37,11 +37,12 @@ private slots:
 private:
     bool shouldAbortClose();
     void doGdalLoad(QString fileName);
+    void makeWidgetSubWindowVisible(QWidget *);
 
     Ui::MainWindow *ui;
     RecentFiles m_recentFiles;
 
-    QPlainTextEdit m_pte;
+    QPlainTextEdit *m_pte;
     OsgForm *m_osgForm;
 };
 

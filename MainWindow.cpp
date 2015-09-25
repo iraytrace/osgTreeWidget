@@ -10,18 +10,30 @@
 #include "OsgForm.h"
 #include "GDALloader.h"
 
+#include <QMessageBox>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_recentFiles(this),
+    m_pte(new QPlainTextEdit),
     m_osgForm(new OsgForm)
 
 {
     ui->setupUi(this);
 
-    QMdiSubWindow *msw = ui->mdiArea->addSubWindow(m_osgForm);
+    QMdiSubWindow *msw;
+
+    msw = ui->mdiArea->addSubWindow(m_osgForm);
     msw->showMaximized();
     msw->setAttribute(Qt::WA_DeleteOnClose, false);
+
+    msw= ui->mdiArea->addSubWindow(m_pte);
+    msw->showMaximized();
+    msw->setAttribute(Qt::WA_DeleteOnClose, false);
+
+
+
 
     m_recentFiles.attachToMenuAfterItem(ui->menuFile, "Open...", SLOT(loadFile(QString)));
     VSLapp::mainWindowSetup(this);
@@ -82,10 +94,32 @@ void MainWindow::doGdalLoad(QString fileName)
 {
     GDALloader *gdal = new GDALloader();
 
-    std::vector<float> buffer = gdal->loadTerrain(fileName);
+    gdal->loadTerrain(fileName);
+    QString msg = gdal->getInfo();
+    qDebug("%s", qPrintable(msg));
+    m_pte->appendPlainText(msg);
+
+    if (gdal->getBandCount() <= 0)
+        return;
+
+    osg::ref_ptr<osg::Geode> geode = gdal->buildGeometry(1);
+    m_osgForm->addNode(geode);
 
 }
-#include <QMessageBox>
+
+void MainWindow::makeWidgetSubWindowVisible(QWidget *w)
+{
+    if (!w->isVisible()) {
+        foreach (QMdiSubWindow *sw, ui->mdiArea->subWindowList()) {
+            if (sw->widget() == w) {
+                sw->show();
+                w->setVisible(true);
+            }
+        }
+    }
+}
+
+
 void MainWindow::loadFile(QString filename)
 {
     if (filename.isEmpty())
@@ -101,17 +135,11 @@ void MainWindow::loadFile(QString filename)
     settings.setValue("currentDirectory", fi.absolutePath());
     m_recentFiles.setMostRecentFile(filename);
 
-    if (filename.endsWith(".tif"))
+    if (filename.endsWith(".tif")) {
+        makeWidgetSubWindowVisible(m_pte);
         doGdalLoad(filename);
-    else {
-        if (!m_osgForm->isVisible()) {
-            foreach (QMdiSubWindow *sw, ui->mdiArea->subWindowList()) {
-                if (sw->widget() == m_osgForm) {
-                    sw->show();
-                    m_osgForm->setVisible(true);
-                }
-            }
-        }
+    } else {
+        makeWidgetSubWindowVisible(m_osgForm);
         m_osgForm->openFile(filename);
     }
 }
