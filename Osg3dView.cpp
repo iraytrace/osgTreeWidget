@@ -458,7 +458,7 @@ void Osg3dView::buildPopupMenu()
     a->setData(QVariant(MM_SELECTOBJECT));
     a->setCheckable(true);
     a->setChecked(false);
-    a = sub->addAction("Pick Point", this, SLOT(setMouseMode()));
+    a = sub->addAction("Pick Point", this, SLOT(setMouseMode()), QKeySequence(Qt::CTRL+ Qt::Key_P));
     m_mouseModeActions.push_back(a);
     a->setData(QVariant(MM_PICKPOINT ));
     a->setCheckable(true);
@@ -496,7 +496,7 @@ void Osg3dView::buildPopupMenu()
     sub = m_popupMenu.addMenu("Toggle...");
     a = sub->addAction("MenuBar", this, SIGNAL(toggleMenuBar()), QKeySequence(Qt::CTRL+ Qt::Key_M));
     a = sub->addAction("ToolBar", this, SIGNAL(toggleToolBar()), QKeySequence(Qt::CTRL+ Qt::Key_T));
-    a = sub->addAction("PointDisplay", this, SIGNAL(togglePickedPoint()));
+    a = sub->addAction("PointDisplay", this, SIGNAL(togglePickedPoint()), QKeySequence(Qt::CTRL+ Qt::SHIFT + Qt::Key_P));
 }
 
 void Osg3dView::customMenuRequested(const QPoint &pos)
@@ -659,7 +659,15 @@ void Osg3dView::keyPressEvent(QKeyEvent *event)
         break;
     case Qt::Key_U: if (isShifted) m_viewingCore->viewBottom(); update(); break;
     case Qt::Key_O: setMouseMode(MM_ORBIT); break;
-    case Qt::Key_P: setMouseMode(MM_PAN); break;
+    case Qt::Key_P:
+        if (event->modifiers() & Qt::ControlModifier)
+            if (event->modifiers() & Qt::ShiftModifier)
+                emit togglePickedPoint();
+            else
+                setMouseMode(MM_PICKPOINT);
+        else
+            setMouseMode(MM_PAN);
+        break;
     case Qt::Key_Z: setMouseMode(MM_ZOOM); break;
     case Qt::Key_R:
         if (isShifted) {

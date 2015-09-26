@@ -113,6 +113,8 @@ void OsgForm::togglePickPoint()
         m_pointIndicator.getNode()->setNodeMask(0);
     else
         m_pointIndicator.getNode()->setNodeMask(~0);
+
+    ui->osg3dView->update();
 }
 
 void OsgForm::toggle3dMenu()
