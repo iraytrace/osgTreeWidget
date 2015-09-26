@@ -24,14 +24,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QMdiSubWindow *msw;
 
-    msw = ui->mdiArea->addSubWindow(m_osgForm);
-    msw->showMaximized();
-    msw->setAttribute(Qt::WA_DeleteOnClose, false);
-
     msw= ui->mdiArea->addSubWindow(m_pte);
-    msw->showMaximized();
+    msw->setWindowTitle("text");
+    msw->show();
     msw->setAttribute(Qt::WA_DeleteOnClose, false);
 
+    msw = ui->mdiArea->addSubWindow(m_osgForm);
+    msw->setWindowTitle("OsgForm");
+    msw->showMaximized();
+    msw->setAttribute(Qt::WA_DeleteOnClose, false);
 
 
 
@@ -88,6 +89,22 @@ void MainWindow::closeEvent(QCloseEvent *event)
         VSLapp::mainWindowSave(this);
         event->accept();
     }
+}
+
+void MainWindow::on_actionTabbed_triggered()
+{
+    ui->mdiArea->setViewMode(QMdiArea::TabbedView);
+}
+
+void MainWindow::on_actionWindowed_triggered()
+{
+    ui->mdiArea->setViewMode(QMdiArea::SubWindowView);
+}
+
+void MainWindow::on_actionTile_triggered()
+{
+    ui->mdiArea->setViewMode(QMdiArea::SubWindowView);
+    ui->mdiArea->tileSubWindows();
 }
 
 void MainWindow::doGdalLoad(QString fileName)

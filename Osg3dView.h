@@ -26,7 +26,8 @@ public:
         MM_ZOOM = (1<<3),
         MM_ROTATE = (1<<4),
         MM_PICK_CENTER = (1<<5),
-        MM_SELECT = (1<<6)
+        MM_SELECTOBJECT = (1<<6),
+        MM_PICKPOINT = (1<<7)
     };
     enum StandardView {
         V_TOP = (1<<0),
@@ -48,6 +49,8 @@ public:
     osg::ref_ptr<ViewingCore> getViewingCore() const { return m_viewingCore; }
 
     static QString mouseModeDescription(Osg3dView::MouseMode mouseMode);
+
+    QMenu *getMenu() { return &m_popupMenu; }
 public slots:
     void paintGL();
     void resizeGL(int w, int h);
@@ -70,12 +73,14 @@ public slots:
 
 signals:
     /// Let the rest of the world (OsgView) know the current MouseMode
-    void mouseModeChanged(Osg3dView::MouseMode);
+    void mouseModeChanged(Osg3dView::MouseMode prev, Osg3dView::MouseMode curr);
     void updated();
     void pickObject(QVector< osg::ref_ptr<osg::Node> > nodePath);
+    void pointPicked(osg::Vec3d pt);
     void nodePathClicked(osg::NodePath);
     void toggleToolBar();
     void toggleMenuBar();
+    void togglePickedPoint();
 
 private:
     osg::Vec2d getNormalized(const int ix, const int iy);
@@ -117,9 +122,11 @@ private:
     /// was it loaded or a control?  Note:  returns false if nothing clicked
     bool firstItemClickedWasLoaded();
 
+    void pickPointOnObject();
 
 
     QMenu m_popupMenu;
+    QList<QAction *> m_mouseModeActions;
 
     /// OSG graphics window
     osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> m_osgGraphicsWindow;

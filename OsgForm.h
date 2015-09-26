@@ -11,6 +11,8 @@
 #include <osg/MatrixTransform>
 #include "ViewingCore.h"
 #include "Osg3dView.h"
+#include "OriginAxis.h"
+#include "pointIndicator.h"
 
 class QTableWidgetItem;
 class QTreeWidgetItem;
@@ -42,22 +44,27 @@ public slots:
     void itemWasChangedInTree(QTreeWidgetItem *treewi, int col);
     void setCameraMaskFromLineEdit();
     void handlePick(QVector<osg::ref_ptr<osg::Node> > nodePath);
+    void showAxis(bool isShown);
 protected slots:
     void toggle3dMenu();
     void toggle3dTools();
+    void togglePickPoint();
+
 private slots:
     void wrieNodesFinished();
     void readNodesFinished();
     void tweakCameraMaskBit(int state);
     void setNodeMask(osg::ref_ptr<osg::Node> n, unsigned mask);
-    void announceMouseMode(Osg3dView::MouseMode mouseMode);
+    void mouseModeHasChanged(Osg3dView::MouseMode oldMouseMode, Osg3dView::MouseMode newMouseMode);
     void updateCameraDisplay();
+    void pointPicked(osg::Vec3d pt);
 private:
     void setupUserInterface();
     void buildLayerBox();
     void setProgressBarState(bool turnOn);
     bool saveThread(osg::ref_ptr<osg::Node> node, const QString fileName);
     osg::ref_ptr<osg::Node> readNodes(const QString fileName);
+    void buildTheTools();
 
 
     Ui::OsgForm *ui;
@@ -74,6 +81,8 @@ private:
     QVector<QCheckBox *> m_checkBoxes;
     QToolBar *m_viewToolBar;
     QMenuBar *m_viewMenuBar;
+    OriginAxis m_axis;
+    PointIndicator m_pointIndicator;
 };
 
 #endif // OSGFORM_H

@@ -31,6 +31,10 @@ public slots:
 
     /// Called to clean up when the window is about to close
     void closeEvent(QCloseEvent *event);
+
+    void on_actionTabbed_triggered();
+    void on_actionWindowed_triggered();
+    void on_actionTile_triggered();
 private slots:
     void loadFile(QString filename);
 
