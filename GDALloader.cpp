@@ -116,7 +116,7 @@ osg::ref_ptr<osg::Geode> GDALloader::buildGeometry(int bandNumber)
     }
 
     // build the normal array (compute normals per-triangle)
-    osgUtil::SmoothingVisitor::smooth(*geom,osg::PI_2);
+    osgUtil::SmoothingVisitor::smooth(*geom,osg::PI_4);
 
 
     osg::ref_ptr<osg::Geode> geode = new osg::Geode;
