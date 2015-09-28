@@ -106,11 +106,13 @@ macro(target_link_windows_libraries EXEC_NAME)
 	list(APPEND IMPORTANTDIRS "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}")
 	list(APPEND IMPORTANTDIRS "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}")
 
-
+        set(APP $<TARGET_FILE:${EXEC_NAME}>)
+message(STATUS "$<TARGET_FILE:${EXEC_NAME}>")
+        file(WRITE ${CMAKE_BINARY_DIR}/bin/${EXEC_NAME}_FIXUP.cmake "include(BundleUtilities)\nfixup_bundle(\"${APP}\" \"\" \"${IMPORTANTDIRS}\" )")
         string(REPLACE " " "_IwasaSPACE_" YADDA "${IMPORTANTDIRS}" )
         message(STATUS "Important >${YADDA}<")
         add_custom_command(TARGET ${EXEC_NAME} POST_BUILD COMMAND "${CMAKE_COMMAND}"
-        -D APP="$<TARGET_FILE:${EXEC_NAME}>"
+        -D APP="${APP}"
         -D LIBDIRS="${YADDA}"
         -P "${CMAKE_SOURCE_DIR}/misc/cmake/postBuildFixup.cmake")
 endmacro(target_link_windows_libraries EXEC_NAME)
