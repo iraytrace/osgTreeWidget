@@ -20,19 +20,19 @@ set(LIBRARY_OUTPUT_PATH    ${CMAKE_BINARY_DIR}/lib)
 
 #set(OSG_DIR "C:/Users/Lee/Documents/src/osg/install340")
 if (WIN32)
-set(OSG_DIR "$ENV{USERPROFILE}/sw") 
+	set(OSG_DIR "$ENV{USERPROFILE}/sw") 
 endif (WIN32)
 find_package(OpenSceneGraph 3.0.1 COMPONENTS osg osgDB osgViewer osgGA osgUtil OpenThreads )
 include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 
-set(ENV{GDAL_DIR} "$ENV{USERPROFILE}/sw")
-find_package(GDAL REQUIRED)
-INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
+#set(ENV{GDAL_DIR} "$ENV{USERPROFILE}/sw")
+#find_package(GDAL REQUIRED)
+#INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
 
 # Get the Qt stuff set up.
 # if cmake cannot find Qt you can set Qt5_DIR or uncomment next line
 if (WIN32)
-set(Qt5_DIR "C:/Qt/5.5/msvc2013_64/lib/cmake/Qt5" CACHE PATH "Qt cmake dir")
+	set(Qt5_DIR "C:/Qt/5.5/msvc2013_64/lib/cmake/Qt5" CACHE PATH "Qt cmake dir")
 endif (WIN32)
 find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
 
@@ -64,26 +64,71 @@ if (WIN32)
 else (WIN32)
     add_executable(osgTreeWidget       ${product_SRCS} ${UIS} )
 endif (WIN32)
+install(TARGETS osgTreeWidget
+    BUNDLE DESTINATION . COMPONENT Runtime
+    RUNTIME DESTINATION bin COMPONENT Runtime )
+macro(target_link_windows_libraries EXEC_NAME)
+        target_link_libraries(${ARGV})
 
-target_link_LIBRARIES(osgTreeWidget
+	# get the list of libraries (without the executable)
+	set(LIBLIST "${ARGV}")
+	LIST(REMOVE_AT LIBLIST 0)
+	
+	# gather a list of places for fixup_bundle() to look
+	foreach(LIB ${LIBLIST})
+		if (NOT "${LIB}" STREQUAL "optimized" AND NOT "${LIB}" STREQUAL "debug")
+			if ("${LIB}" MATCHES ".*::.*")
+				# these are the Qt::ASDF and we need the location
+				get_target_property(LOCATION ${LIB} LOCATION)
+			else ()
+				set(LOCATION "${LIB}")
+			endif()
+			get_filename_component(THEDIR "${LOCATION}" DIRECTORY)
+			list(APPEND IMPORTANTDIRS "${THEDIR}")
+			
+			# if the location ends in "lib" chances are there is a "bin" where we might find DLLs
+			get_filename_component(DIRNAME ${THEDIR} NAME)
+			if ("${DIRNAME}" STREQUAL "lib")
+				get_filename_component(DIRNAME ${THEDIR} DIRECTORY)
+				list(APPEND IMPORTANTDIRS "${DIRNAME}/bin")
+			endif()
+		endif()
+	endforeach()
+	
+	list(REMOVE_DUPLICATES IMPORTANTDIRS)
+
+	list(APPEND IMPORTANTDIRS "${CMAKE_INSTALL_PREFIX}")
+	list(APPEND IMPORTANTDIRS "${CMAKE_INSTALL_PREFIX}/bin")
+	list(APPEND IMPORTANTDIRS "${CMAKE_INSTALL_PREFIX}/lib")
+	list(APPEND IMPORTANTDIRS "${CMAKE_BINARY_DIR}")
+	list(APPEND IMPORTANTDIRS "${CMAKE_BINARY_DIR}/bin")
+	list(APPEND IMPORTANTDIRS "${CMAKE_BINARY_DIR}/lib")
+	list(APPEND IMPORTANTDIRS "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}")
+	list(APPEND IMPORTANTDIRS "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}")
+
+
+        string(REPLACE " " "_IwasaSPACE_" YADDA "${IMPORTANTDIRS}" )
+        message(STATUS "Important >${YADDA}<")
+        add_custom_command(TARGET ${EXEC_NAME} POST_BUILD COMMAND "${CMAKE_COMMAND}"
+        -D APP="$<TARGET_FILE:${EXEC_NAME}>"
+        -D LIBDIRS="${YADDA}"
+        -P "${CMAKE_SOURCE_DIR}/misc/cmake/postBuildFixup.cmake")
+endmacro(target_link_windows_libraries EXEC_NAME)
+
+target_link_windows_libraries(osgTreeWidget
     Qt5::Core
     Qt5::Gui
     Qt5::Widgets
     Qt5::OpenGL
+	Qt5::WinMain
    ${OPENSCENEGRAPH_LIBRARIES}
-${GDAL_LIBRARY}
+#${GDAL_LIBRARY}
   )
 set_target_properties(osgTreeWidget
     PROPERTIES
     ENABLE_EXPORTS ON)
 # if cmake version is before 2.8.12 you need to add 
 # COMPILE_FLAGS "${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}"
-
-	
-install(TARGETS osgTreeWidget
-    BUNDLE DESTINATION . COMPONENT Runtime
-    RUNTIME DESTINATION bin COMPONENT Runtime )
-
 
 # The following is from http://www.vtk.org/Wiki/CMake/CPack/BundleUtilities/Examples/Linux/Automatic
 SET(APPS "\${CMAKE_INSTALL_PREFIX}/bin/osgTreeWidget${CMAKE_EXECUTABLE_SUFFIX}")
@@ -104,7 +149,7 @@ set(YOUR_LIBRARY_DIRS
   "${Qt5_DIR}/../../../lib")
 
 file(GLOB OSG_PLUGINS_DIR ${OSG_DIR}/*/osgPlugins-${OPENSCENEGRAPH_VERSION})
-message(STATUS ${OSG_PLUGINS_DIR})
+#message(STATUS ${OSG_PLUGINS_DIR})
 
 file(GLOB OSG_PLUGINS "${OSG_PLUGINS_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}")
 foreach (OSG_PLUGIN ${OSG_PLUGINS})
@@ -112,7 +157,7 @@ file(COPY "${OSG_PLUGIN}"
   DESTINATION bin/osgPlugins-${OPENSCENEGRAPH_VERSION})
 endforeach()
 
-find_and_install_dependencies(osgTreeWidget)
+#find_and_install_dependencies(osgTreeWidget)
 
 install(CODE "
   include(BundleUtilities)
@@ -120,4 +165,3 @@ install(CODE "
   " COMPONENT Runtime)
 
  include(setupCpack)
-

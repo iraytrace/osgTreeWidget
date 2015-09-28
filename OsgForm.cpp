@@ -317,8 +317,10 @@ void OsgForm::readNodesFinished()
         qDebug("loaded Node of type %s", loaded->className());
     }
 
+    QFileInfo fi(loadedFileName);
     if (loaded->getName().size() == 0)
-        loaded->setName(basename(qPrintable(loadedFileName)));
+        loaded->setName(qPrintable(fi.baseName()));
+
 
     addNode(loaded);
 }
