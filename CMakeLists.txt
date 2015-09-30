@@ -1,4 +1,4 @@
-project( osgTreeWidget )
+project( osgTreeWidget_github )
 cmake_minimum_required(VERSION 3.2)
 
 # Allow all sub CMakeLists to use our custom distributed CMake modules
@@ -20,14 +20,17 @@ set(LIBRARY_OUTPUT_PATH    ${CMAKE_BINARY_DIR}/lib)
 
 #set(OSG_DIR "C:/Users/Lee/Documents/src/osg/install340")
 if (WIN32)
-	set(OSG_DIR "$ENV{USERPROFILE}/sw") 
+        #set(OSG_DIR "$ENV{USERPROFILE}/sw")
+	set(OSG_DIR "C:/osgearth/Release")
+	#set(ENV(OSG_DIR) "C:/osgearth/Release")
 endif (WIN32)
 find_package(OpenSceneGraph 3.0.1 COMPONENTS osg osgDB osgViewer osgGA osgUtil OpenThreads )
 include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
 
 #set(ENV{GDAL_DIR} "$ENV{USERPROFILE}/sw")
-#find_package(GDAL REQUIRED)
-#INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
+set(ENV{GDAL_DIR} "C:/osgearth/Release")
+find_package(GDAL REQUIRED)
+INCLUDE_DIRECTORIES(${GDAL_INCLUDE_DIR})
 
 # Get the Qt stuff set up.
 # if cmake cannot find Qt you can set Qt5_DIR or uncomment next line
@@ -124,7 +127,7 @@ target_link_windows_libraries(osgTreeWidget
     Qt5::OpenGL
 	Qt5::WinMain
    ${OPENSCENEGRAPH_LIBRARIES}
-#${GDAL_LIBRARY}
+${GDAL_LIBRARY}
   )
 set_target_properties(osgTreeWidget
     PROPERTIES

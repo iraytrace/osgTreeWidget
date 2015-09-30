@@ -6,7 +6,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-
+#include "gdal_priv.h"
+#include "cpl_conv.h" // for CPLMalloc()
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -21,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->statusBar, SLOT(showMessage(QString)));
     connect(ui->actionClose, SIGNAL(triggered(bool)),
             ui->osgForm, SLOT(removeAllNodes()));
+
+        GDALAllRegister();
 }
 
 MainWindow::~MainWindow()
@@ -69,6 +72,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->accept();
     }
 }
+
+
+
 void MainWindow::loadFile(QString filename)
 {
     if (filename.isEmpty())
@@ -85,6 +91,8 @@ void MainWindow::loadFile(QString filename)
     m_recentFiles.setMostRecentFile(filename);
 
         ui->osgForm->openFile(filename);
+
+
 }
 
 bool MainWindow::shouldAbortClose()
